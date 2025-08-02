@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainArk Network - MetaMask Setup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .network-info {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .network-info h3 {
+            margin-top: 0;
+            color: #2d3748;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        .value {
+            color: #2d3748;
+            font-family: monospace;
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .status.warning {
+            background: #fefcbf;
+            color: #744210;
+            border: 1px solid #f6e05e;
+        }
+        
+        .status.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .button-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .logs {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 BrainArk Network Setup</h1>
+        
+        <div class="network-info">
+            <h3>Network Configuration</h3>
+            <div class="info-row">
+                <span class="label">Network Name:</span>
+                <span class="value">BrainArk Local Network</span>
+            </div>
+            <div class="info-row">
+                <span class="label">RPC URL:</span>
+                <span class="value">http://localhost:8545</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Chain ID:</span>
+                <span class="value">424242</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Currency Symbol:</span>
+                <span class="value">ETH</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Block Explorer:</span>
+                <span class="value">http://localhost:3000</span>
+            </div>
+        </div>
+        
+        <div id="status" class="status hidden"></div>
+        
+        <div class="button-group">
+            <button id="checkNetwork" onclick="checkNetwork()">Check Network Status</button>
+            <button id="addNetwork" onclick="addNetwork()">Add to MetaMask</button>
+            <button id="switchNetwork" onclick="switchNetwork()">Switch Network</button>
+            <button id="getBalance" onclick="getBalance()">Check Balance</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="clearLogs()">Clear Logs</button>
+            <button onclick="startBlockchain()">Start Blockchain</button>
+        </div>
+        
+        <div id="logs" class="logs"></div>
+    </div>
+
+    <script src="add-metamask-network.js"></script>
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+        }
+        
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        async function checkNetwork() {
+            showStatus('Checking network status...', 'info');
+            log('🔍 Checking network connectivity...');
+            
+            try {
+                const isRunning = await testNetworkConnectivity();
+                if (isRunning) {
+                    showStatus('✅ Network is running and accessible', 'success');
+                    log('✅ Network connectivity confirmed');
+                    
+                    if (typeof window.ethereum !== 'undefined') {
+                        const isConnected = await checkCurrentNetwork();
+                        if (isConnected) {
+                            log('✅ Already connected to BrainArk network');
+                        } else {
+                            log('ℹ️ Connected to different network');
+                        }
+                    }
+                } else {
+                    showStatus('❌ Network is not running. Please start your Besu blockchain.', 'error');
+                    log('❌ Network not accessible');
+                }
+            } catch (error) {
+                showStatus('❌ Error checking network: ' + error.message, 'error');
+                log('❌ Error: ' + error.message);
+            }
+        }
+        
+        async function addNetwork() {
+            if (typeof window.ethereum === 'undefined') {
+                showStatus('❌ MetaMask not detected. Please install MetaMask extension.', 'error');
+                log('❌ MetaMask not found');
+                return;
+            }
+            
+            showStatus('Adding network to MetaMask...', 'info');
+            log('🔗 Adding BrainArk network to MetaMask...');
+            
+            try {
+                const success = await addBrainArkNetwork();
+                if (success) {
+                    showStatus('✅ Network added successfully!', 'success');
+                    log('✅ Network added and switched successfully');
+                } else {
+                    showStatus('❌ Failed to add network', 'error');
+                    log('❌ Failed to add network');
+                }
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                log('❌ Error: ' + error.message);
+            }
+        }
+        
+        async function switchNetwork() {
+            if (typeof window.ethereum === 'undefined') {
+                showStatus('❌ MetaMask not detected', 'error');
+                return;
+            }
+            
+            showStatus('Switching to BrainArk network...', 'info');
+            log('🔄 Switching to BrainArk network...');
+            
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x67932' }]
+                });
+                showStatus('✅ Switched to BrainArk network!', 'success');
+                log('✅ Successfully switched to BrainArk network');
+            } catch (error) {
+                if (error.code === 4902) {
+                    showStatus('⚠️ Network not found. Please add it first.', 'warning');
+                    log('⚠️ Network not found in MetaMask');
+                } else {
+                    showStatus('❌ Error switching network: ' + error.message, 'error');
+                    log('❌ Error: ' + error.message);
+                }
+            }
+        }
+        
+        async function getBalance() {
+            if (typeof window.ethereum === 'undefined') {
+                showStatus('❌ MetaMask not detected', 'error');
+                return;
+            }
+            
+            showStatus('Checking balance...', 'info');
+            log('💰 Checking account balance...');
+            
+            try {
+                const balance = await getBalance();
+                showStatus(`💰 Balance: ${balance} ETH`, 'success');
+                log(`💰 Current balance: ${balance} ETH`);
+            } catch (error) {
+                showStatus('❌ Error getting balance: ' + error.message, 'error');
+                log('❌ Error: ' + error.message);
+            }
+        }
+        
+        function startBlockchain() {
+            showStatus('Starting blockchain... Check your terminal', 'info');
+            log('🚀 To start the blockchain, run this command in your terminal:');
+            log('cd /home/brainark/brainark_besu_chain');
+            log('docker-compose -f docker-compose.blockchain.yml up -d');
+        }
+        
+        // Auto-check network status on page load
+        window.addEventListener('load', () => {
+            log('🧠 BrainArk Network Setup Tool loaded');
+            log('📋 Network Details:');
+            log('   Chain ID: 424242');
+            log('   RPC URL: http://localhost:8545');
+            log('   Currency: ETH');
+            log('');
+            checkNetwork();
+        });
+        
+        // Listen for MetaMask events
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.on('chainChanged', (chainId) => {
+                log(`🔄 Network changed to: ${chainId}`);
+                if (chainId === '0x67932') {
+                    showStatus('✅ Connected to BrainArk network!', 'success');
+                } else {
+                    showStatus('ℹ️ Connected to different network', 'info');
+                }
+            });
+            
+            window.ethereum.on('accountsChanged', (accounts) => {
+                log(`👤 Account changed: ${accounts[0] || 'None'}`);
+            });
+        }
+    </script>
+</body>
+</html>

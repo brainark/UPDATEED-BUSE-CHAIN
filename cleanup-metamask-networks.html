@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Network Cleanup Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .alert.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .alert.warning {
+            background: #fefcbf;
+            color: #744210;
+            border: 1px solid #f6e05e;
+        }
+        
+        .alert.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .network-list {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .network-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .network-item:last-child {
+            border-bottom: none;
+        }
+        
+        .network-info {
+            flex: 1;
+        }
+        
+        .network-name {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .network-details {
+            font-size: 12px;
+            color: #718096;
+            font-family: monospace;
+        }
+        
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status.conflict {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .status.ok {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .instructions {
+            background: #edf2f7;
+            border-left: 4px solid #4299e1;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #2b6cb0;
+        }
+        
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        
+        .logs {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 MetaMask Network Cleanup Tool</h1>
+        
+        <div class="alert warning">
+            <strong>⚠️ Network Conflict Detected</strong><br>
+            Your MetaMask has conflicting networks that use the same RPC endpoint (localhost:8545). 
+            This prevents adding the BrainArk network properly.
+        </div>
+        
+        <div id="status" class="alert info">
+            Click "Scan Networks" to detect conflicting networks.
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button id="scanBtn" onclick="scanNetworks()">🔍 Scan Networks</button>
+            <button id="cleanupBtn" onclick="showCleanupInstructions()" style="display: none;">📋 Show Cleanup Instructions</button>
+            <button id="addBrainArkBtn" onclick="addBrainArkNetwork()" style="display: none;">🌐 Add BrainArk Network</button>
+        </div>
+        
+        <div id="networkList" class="network-list" style="display: none;">
+            <h3>Detected Networks</h3>
+            <div id="networks"></div>
+        </div>
+        
+        <div id="instructions" class="instructions" style="display: none;">
+            <h3>🛠️ Manual Cleanup Instructions</h3>
+            <p>Follow these steps to remove conflicting networks from MetaMask:</p>
+            <ol>
+                <li><strong>Open MetaMask extension</strong> (click the fox icon in your browser)</li>
+                <li><strong>Click the network dropdown</strong> at the top of MetaMask</li>
+                <li><strong>Find networks using localhost:8545</strong> such as:
+                    <ul>
+                        <li>"Hardhat Local" (Chain ID: 31337)</li>
+                        <li>"Ganache Local" (Chain ID: 1337)</li>
+                        <li>"Local Testnet" or similar</li>
+                    </ul>
+                </li>
+                <li><strong>For each conflicting network:</strong>
+                    <ul>
+                        <li>Click on the network name</li>
+                        <li>Look for a "Remove" or "Delete" button (usually an X or trash icon)</li>
+                        <li>Click it and confirm the removal</li>
+                    </ul>
+                </li>
+                <li><strong>After removing conflicts:</strong>
+                    <ul>
+                        <li>Come back to this page</li>
+                        <li>Click "Add BrainArk Network" below</li>
+                    </ul>
+                </li>
+            </ol>
+            <div class="alert warning">
+                <strong>Note:</strong> If you don't see a remove option, the network might be a default one. 
+                Try switching to a different network first, then look for the remove option.
+            </div>
+        </div>
+        
+        <div id="logs" class="logs" style="display: none;"></div>
+    </div>
+
+    <script>
+        let detectedNetworks = [];
+        
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            logsDiv.style.display = 'block';
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `alert ${type}`;
+            statusDiv.innerHTML = message;
+        }
+        
+        function getProvider() {
+            if (typeof window.ethereum === 'undefined') return null;
+            
+            if (window.ethereum.providers && Array.isArray(window.ethereum.providers)) {
+                return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
+            }
+            
+            return window.ethereum;
+        }
+        
+        async function scanNetworks() {
+            const provider = getProvider();
+            if (!provider) {
+                updateStatus('❌ MetaMask not detected. Please install MetaMask extension.', 'error');
+                return;
+            }
+            
+            updateStatus('🔍 Scanning for conflicting networks...', 'info');
+            log('Starting network scan...');
+            
+            // Get current network
+            try {
+                const currentChainId = await provider.request({ method: 'eth_chainId' });
+                const currentChainDecimal = parseInt(currentChainId, 16);
+                log(`Current network: ${currentChainId} (${currentChainDecimal})`);
+                
+                // Known conflicting networks
+                const conflictingNetworks = [
+                    { chainId: '0x7a69', name: 'Hardhat Local', decimal: 31337, rpc: 'http://localhost:8545' },
+                    { chainId: '0x539', name: 'Ganache Local', decimal: 1337, rpc: 'http://localhost:8545' },
+                    { chainId: '0x1337', name: 'Local Testnet', decimal: 4919, rpc: 'http://localhost:8545' },
+                ];
+                
+                detectedNetworks = [];
+                
+                for (const network of conflictingNetworks) {
+                    try {
+                        // Try to switch to see if network exists
+                        await provider.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: network.chainId }],
+                        });
+                        
+                        detectedNetworks.push({
+                            ...network,
+                            status: 'conflict',
+                            current: currentChainId === network.chainId
+                        });
+                        
+                        log(`❌ Found conflicting network: ${network.name} (${network.chainId})`);
+                    } catch (error) {
+                        if (error.code !== 4902) {
+                            log(`⚠️ Error checking ${network.name}: ${error.message}`);
+                        }
+                    }
+                }
+                
+                // Switch back to original network
+                if (currentChainId !== await provider.request({ method: 'eth_chainId' })) {
+                    try {
+                        await provider.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: currentChainId }],
+                        });
+                    } catch (error) {
+                        log(`⚠️ Could not switch back to original network: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                log(`❌ Error during scan: ${error.message}`);
+                updateStatus('❌ Error scanning networks. Please try again.', 'error');
+            }
+        }
+        
+        function displayResults() {
+            const networkListDiv = document.getElementById('networkList');
+            const networksDiv = document.getElementById('networks');
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            const addBrainArkBtn = document.getElementById('addBrainArkBtn');
+            
+            if (detectedNetworks.length === 0) {
+                updateStatus('✅ No conflicting networks found! You can now add the BrainArk network.', 'success');
+                addBrainArkBtn.style.display = 'inline-block';
+                networkListDiv.style.display = 'none';
+                log('✅ No conflicts detected');
+            } else {
+                updateStatus(`⚠️ Found ${detectedNetworks.length} conflicting network(s). Manual cleanup required.`, 'warning');
+                cleanupBtn.style.display = 'inline-block';
+                
+                networkListDiv.style.display = 'block';
+                networksDiv.innerHTML = '';
+                
+                detectedNetworks.forEach(network => {
+                    const networkDiv = document.createElement('div');
+                    networkDiv.className = 'network-item';
+                    networkDiv.innerHTML = `
+                        <div class="network-info">
+                            <div class="network-name">${network.name}</div>
+                            <div class="network-details">Chain ID: ${network.chainId} (${network.decimal}) | RPC: ${network.rpc}</div>
+                        </div>
+                        <div class="status conflict">CONFLICT</div>
+                    `;
+                    networksDiv.appendChild(networkDiv);
+                });
+                
+                log(`⚠️ Found ${detectedNetworks.length} conflicting networks`);
+            }
+        }
+        
+        function showCleanupInstructions() {
+            document.getElementById('instructions').style.display = 'block';
+            log('📋 Showing cleanup instructions');
+        }
+        
+        async function addBrainArkNetwork() {
+            const provider = getProvider();
+            if (!provider) {
+                updateStatus('❌ MetaMask not detected', 'error');
+                return;
+            }
+            
+            updateStatus('🌐 Adding BrainArk network...', 'info');
+            log('Adding BrainArk network...');
+            
+            // Determine if we're on localhost
+            const isLocal = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+            
+            const brainarkNetwork = {
+                chainId: '0x67932',
+                chainName: isLocal ? 'BrainArk Local Network' : 'BrainArk Besu Network',
+                nativeCurrency: { name: 'BrainArk', symbol: 'BAK', decimals: 18 },
+                rpcUrls: isLocal ? ['http://localhost:8545'] : ['https://rpc.brainark.online'],
+                blockExplorerUrls: isLocal ? ['http://localhost:3000'] : ['https://explorer.brainark.online']
+            };
+            
+            try {
+                // First try to switch
+                try {
+                    await provider.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: brainarkNetwork.chainId }],
+                    });
+                    updateStatus('✅ Successfully switched to BrainArk network!', 'success');
+                    log('✅ Switched to existing BrainArk network');
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        // Network doesn't exist, add it
+                        await provider.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [brainarkNetwork],
+                        });
+                        updateStatus('✅ Successfully added and switched to BrainArk network!', 'success');
+                        log('✅ Added and switched to BrainArk network');
+                    } else {
+                        throw switchError;
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error adding network: ${error.message}`);
+                
+                if (error.code === 4001) {
+                    updateStatus('❌ User rejected the request', 'error');
+                } else if (error.code === -32002) {
+                    updateStatus('⚠️ Request already pending. Please check MetaMask.', 'warning');
+                } else if (error.message.includes('same RPC endpoint')) {
+                    updateStatus('❌ Still have conflicting networks. Please remove them manually first.', 'error');
+                    showCleanupInstructions();
+                } else {
+                    updateStatus(`❌ Failed to add network: ${error.message}`, 'error');
+                }
+            }
+        }
+        
+        // Auto-scan on page load
+        window.addEventListener('load', () => {
+            log('🔧 MetaMask Network Cleanup Tool loaded');
+            setTimeout(scanNetworks, 1000);
+        });
+    </script>
+</body>
+</html>

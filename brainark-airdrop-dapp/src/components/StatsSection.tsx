@@ -1,0 +1,232 @@
+import { useState, useEffect } from 'react'
+import { AIRDROP_CONFIG, EPO_CONFIG } from '@/utils/config'
+
+export default function StatsSection() {
+  const [stats, setStats] = useState({
+    totalParticipants: 0,
+    totalClaimed: 0,
+    totalSold: 0,
+    totalRaised: 0,
+  })
+
+  useEffect(() => {
+    // Simulate loading stats from contracts
+    // In a real implementation, this would fetch from the blockchain
+    const loadStats = async () => {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      setStats({
+        totalParticipants: 12547, // Mock data
+        totalClaimed: 125470, // Mock data
+        totalSold: 2500000, // Mock data
+        totalRaised: 50000, // Mock data
+      })
+    }
+
+    loadStats()
+  }, [])
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M'
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K'
+    }
+    return num.toLocaleString()
+  }
+
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(num)
+  }
+
+  return (
+    <section className="py-16 bg-deep-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Live Statistics
+          </h2>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            Real-time data from the BrainArk ecosystem
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Airdrop Participants */}
+          <div className="card-brilliant p-6 text-center">
+            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">👥</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {formatNumber(stats.totalParticipants)}
+            </h3>
+            <p className="text-gray-600 font-medium">
+              Airdrop Participants
+            </p>
+            <div className="mt-2 text-sm text-gray-500">
+              Target: {formatNumber(AIRDROP_CONFIG.TARGET_PARTICIPANTS)}
+            </div>
+            <div className="mt-3 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                style={{ 
+                  width: `${Math.min((stats.totalParticipants / AIRDROP_CONFIG.TARGET_PARTICIPANTS) * 100, 100)}%` 
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Total BAK Claimed */}
+          <div className="card-brilliant p-6 text-center">
+            <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🎁</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {formatNumber(stats.totalClaimed)}
+            </h3>
+            <p className="text-gray-600 font-medium">
+              BAK Tokens Claimed
+            </p>
+            <div className="mt-2 text-sm text-gray-500">
+              Pool: {formatNumber(AIRDROP_CONFIG.TOTAL_SUPPLY)} BAK
+            </div>
+            <div className="mt-3 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                style={{ 
+                  width: `${Math.min((stats.totalClaimed / AIRDROP_CONFIG.TOTAL_SUPPLY) * 100, 100)}%` 
+                }}
+              />
+            </div>
+          </div>
+
+          {/* EPO Tokens Sold */}
+          <div className="card-brilliant p-6 text-center">
+            <div className="bg-teal-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">💰</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {formatNumber(stats.totalSold)}
+            </h3>
+            <p className="text-gray-600 font-medium">
+              EPO Tokens Sold
+            </p>
+            <div className="mt-2 text-sm text-gray-500">
+              Supply: {formatNumber(EPO_CONFIG.TOTAL_SUPPLY)} BAK
+            </div>
+            <div className="mt-3 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-teal-500 h-2 rounded-full transition-all duration-500"
+                style={{ 
+                  width: `${Math.min((stats.totalSold / EPO_CONFIG.TOTAL_SUPPLY) * 100, 100)}%` 
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Total Raised */}
+          <div className="card-brilliant p-6 text-center">
+            <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">📈</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {formatCurrency(stats.totalRaised)}
+            </h3>
+            <p className="text-gray-600 font-medium">
+              Total Raised
+            </p>
+            <div className="mt-2 text-sm text-gray-500">
+              Price: ${EPO_CONFIG.PRICE_PER_COIN} per BAK
+            </div>
+            <div className="mt-3 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                style={{ 
+                  width: `${Math.min((stats.totalRaised / (EPO_CONFIG.TOTAL_SUPPLY * EPO_CONFIG.PRICE_PER_COIN)) * 100, 100)}%` 
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Info */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Airdrop Info */}
+          <div className="card-brilliant p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              🎁 Airdrop Details
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tokens per user:</span>
+                <span className="font-semibold text-gray-900">
+                  {AIRDROP_CONFIG.COINS_PER_USER} BAK
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Referral bonus:</span>
+                <span className="font-semibold text-gray-900">
+                  {AIRDROP_CONFIG.REFERRAL_BONUS} BAK
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Referral pool:</span>
+                <span className="font-semibold text-gray-900">
+                  {formatNumber(AIRDROP_CONFIG.REFERRAL_POOL)} BAK
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Distribution delay:</span>
+                <span className="font-semibold text-gray-900">
+                  24 hours
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* EPO Info */}
+          <div className="card-brilliant p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">
+              💰 EPO Details
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Token price:</span>
+                <span className="font-semibold text-gray-900">
+                  ${EPO_CONFIG.PRICE_PER_COIN}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Accepted tokens:</span>
+                <span className="font-semibold text-gray-900">
+                  {EPO_CONFIG.ACCEPTED_TOKENS.join(', ')}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total supply:</span>
+                <span className="font-semibold text-gray-900">
+                  {formatNumber(EPO_CONFIG.TOTAL_SUPPLY)} BAK
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Time limit:</span>
+                <span className="font-semibold text-gray-900">
+                  {EPO_CONFIG.DURATION_DAYS} days
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

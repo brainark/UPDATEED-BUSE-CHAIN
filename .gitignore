@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Cache directories
+.cache/
+*.cache
+.npm/
+.yarn/
+
+# Large files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Node.js cache
+react-explorer/node_modules/.cache/
+**/node_modules/.cache/
+
+# Besu data (keep structure but ignore large data files)
+validators/*/data/database/
+validators/*/data/caches/
+data/besu/*/database/
+data/besu/*/caches/
+
+# Docker volumes
+docker/validators/*/data/database/
+docker/validators/*/data/caches/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

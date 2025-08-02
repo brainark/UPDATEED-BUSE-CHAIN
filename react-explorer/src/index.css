@@ -1,0 +1,41 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: url('https://ipfs.io/ipfs/bafkreieg4g4l6vaa6ym3ktqhbjxylxsbkwec2i7oi2hrujpevj6p3ea5mm') no-repeat center center fixed;
+  background-size: cover;
+  color: #2c1810;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 248, 240, 0.15); /* Very light overlay to preserve background */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ensure main content is above overlay */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

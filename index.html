@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠 BrainArk Blockchain Explorer</title>
+
+  <!-- Web3 and WalletConnect scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🧠 BrainArk Blockchain Explorer</h1>
+
+  <div class="section">
+    <button id="connectBtn">Connect MetaMask</button>
+    <button id="connectWCBtn">Connect WalletConnect</button>
+    <button id="disconnectBtn">Disconnect</button>
+    <div id="walletAddress">Not connected</div>
+  </div>
+
+  <div class="section">
+    <input type="text" id="txHash" placeholder="Enter transaction hash" />
+    <button id="getTransactionBtn">Get Transaction</button>
+    <div id="transactionResult" class="result-box"></div>
+  </div>
+
+  <div class="section">
+    <input type="text" id="blockInput" placeholder="Enter block number or 'latest'" />
+    <button id="getBlockBtn">Get Block</button>
+    <div id="blockResult" class="result-box"></div>
+  </div>
+
+  <!-- Load JS at the end -->
+  <script src="explorer.js"></script>
+</body>
+</html>
+ 
