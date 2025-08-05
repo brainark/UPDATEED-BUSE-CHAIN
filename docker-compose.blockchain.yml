@@ -1,0 +1,181 @@
+version: "3.9"
+
+services:
+  besu-node1:
+    image: hyperledger/besu:23.4.0
+    container_name: besu-node1
+    restart: unless-stopped
+    ports:
+      - 8545:8545
+      - 30303:30303
+      - 9545:9545
+    volumes:
+      - ./validators/node1/data:/var/lib/besu/database
+      - ./validators/node1/key:/var/lib/besu/key
+      - ./config/genesis.json:/config/genesis.json
+      - ./config/permissions_config.toml:/var/lib/besu/permissions_config.toml
+      - ./config/static-nodes.json:/var/lib/besu/static-nodes.json
+    command: >
+      --genesis-file=/config/genesis.json
+      --data-path=/var/lib/besu
+      --rpc-http-enabled
+      --rpc-http-port=8545
+      --rpc-http-cors-origins=all
+      --host-whitelist=*
+      --rpc-http-api=ETH,NET,WEB3,IBFT
+      --p2p-port=30303
+      --rpc-ws-enabled
+      --rpc-ws-port=8546
+      --metrics-enabled
+      --metrics-port=9545
+      --metrics-host=0.0.0.0
+      --logging=INFO
+      --permissions-nodes-config-file-enabled=true
+      --node-private-key-file=/var/lib/besu/key/key
+      --min-gas-price=1000
+      --miner-enabled
+      --miner-coinbase=0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/8545 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      besu_net:
+        ipv4_address: 172.21.0.10
+
+  besu-node2:
+    image: hyperledger/besu:23.4.0
+    container_name: besu-node2
+    restart: unless-stopped
+    ports:
+      - 8547:8545
+      - 30307:30303
+      - 9547:9545
+    volumes:
+      - ./validators/node2/data:/var/lib/besu/database
+      - ./validators/node2/key:/var/lib/besu/key
+      - ./config/genesis.json:/config/genesis.json
+      - ./config/permissions_config.toml:/var/lib/besu/permissions_config.toml
+      - ./config/static-nodes.json:/var/lib/besu/static-nodes.json
+    command: >
+      --genesis-file=/config/genesis.json
+      --data-path=/var/lib/besu
+      --rpc-http-enabled
+      --rpc-http-port=8545
+      --rpc-http-cors-origins=all
+      --host-whitelist=*
+      --rpc-http-api=ETH,NET,WEB3,IBFT
+      --p2p-port=30303
+      --rpc-ws-enabled
+      --rpc-ws-port=8546
+      --metrics-enabled
+      --metrics-port=9545
+      --metrics-host=0.0.0.0
+      --logging=INFO
+      --permissions-nodes-config-file-enabled=true
+      --node-private-key-file=/var/lib/besu/key/key
+      --min-gas-price=1000
+      --miner-enabled
+      --miner-coinbase=0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/8545 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      besu_net:
+        ipv4_address: 172.21.0.11
+
+  besu-node3:
+    image: hyperledger/besu:23.4.0
+    container_name: besu-node3
+    restart: unless-stopped
+    ports:
+      - 8549:8545
+      - 30309:30303
+      - 9549:9545
+    volumes:
+      - ./validators/node3/data:/var/lib/besu/database
+      - ./validators/node3/key:/var/lib/besu/key
+      - ./config/genesis.json:/config/genesis.json
+      - ./config/permissions_config.toml:/var/lib/besu/permissions_config.toml
+      - ./config/static-nodes.json:/var/lib/besu/static-nodes.json
+    command: >
+      --genesis-file=/config/genesis.json
+      --data-path=/var/lib/besu
+      --rpc-http-enabled
+      --rpc-http-port=8545
+      --rpc-http-cors-origins=all
+      --host-whitelist=*
+      --rpc-http-api=ETH,NET,WEB3,IBFT
+      --p2p-port=30303
+      --rpc-ws-enabled
+      --rpc-ws-port=8546
+      --metrics-enabled
+      --metrics-port=9545
+      --metrics-host=0.0.0.0
+      --logging=INFO
+      --permissions-nodes-config-file-enabled=true
+      --node-private-key-file=/var/lib/besu/key/key
+      --min-gas-price=1000
+      --miner-enabled
+      --miner-coinbase=0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/8545 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      besu_net:
+        ipv4_address: 172.21.0.12
+
+  besu-node4:
+    image: hyperledger/besu:23.4.0
+    container_name: besu-node4
+    restart: unless-stopped
+    ports:
+      - 8551:8545
+      - 30311:30303
+      - 9551:9545
+    volumes:
+      - ./validators/node4/data:/var/lib/besu/database
+      - ./validators/node4/key:/var/lib/besu/key
+      - ./config/genesis.json:/config/genesis.json
+      - ./config/permissions_config.toml:/var/lib/besu/permissions_config.toml
+      - ./config/static-nodes.json:/var/lib/besu/static-nodes.json
+    command: >
+      --genesis-file=/config/genesis.json
+      --data-path=/var/lib/besu
+      --rpc-http-enabled
+      --rpc-http-port=8545
+      --rpc-http-cors-origins=all
+      --host-whitelist=*
+      --rpc-http-api=ETH,NET,WEB3,IBFT
+      --p2p-port=30303
+      --rpc-ws-enabled
+      --rpc-ws-port=8546
+      --metrics-enabled
+      --metrics-port=9545
+      --metrics-host=0.0.0.0
+      --logging=INFO
+      --permissions-nodes-config-file-enabled=true
+      --node-private-key-file=/var/lib/besu/key/key
+      --min-gas-price=1000
+      --miner-enabled
+      --miner-coinbase=0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/8545 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      besu_net:
+        ipv4_address: 172.21.0.13
+
+networks:
+  besu_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
