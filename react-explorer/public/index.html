@@ -3,36 +3,70 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
       content="BrainArk Blockchain Explorer - React Version"
     />
     
-    <!-- Security Headers -->
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://rpc.brainark.online" />
+    <link rel="dns-prefetch" href="https://bridge.walletconnect.org" />
+    <link rel="dns-prefetch" href="https://registry.walletconnect.com" />
+    
+    <!-- Security Headers (Note: X-Frame-Options should be set via HTTP headers in production) -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
     
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://bridge.walletconnect.org https://explorer-api.walletconnect.com https://verify.walletconnect.org;
       style-src 'self' 'unsafe-inline';
-      img-src 'self' data: https://ipfs.io;
-      connect-src 'self' http://localhost:* https://rpc.brainark.online https://metamask.io;
+      img-src 'self' data: https://ipfs.io https://registry.walletconnect.org https://explorer-api.walletconnect.com https://imagedelivery.net;
+      connect-src 'self' http://localhost:* https://rpc.brainark.online https://metamask.io https://bridge.walletconnect.org wss://bridge.walletconnect.org wss://*.bridge.walletconnect.org https://relay.walletconnect.com wss://relay.walletconnect.com wss://relay.walletconnect.org https://explorer-api.walletconnect.com https://registry.walletconnect.com https://verify.walletconnect.org https://verify.walletconnect.com wss://v.bridge.walletconnect.org wss://j.bridge.walletconnect.org;
       font-src 'self';
       object-src 'none';
       media-src 'none';
-      frame-src 'none';
+      frame-src 'self' https://bridge.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com;
     " />
     
     <title>🧠 BrainArk Blockchain Explorer</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading screen for better perceived performance -->
+      <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      ">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🧠</div>
+        <h1 style="margin: 0; font-size: 1.5rem; font-weight: 600;">BrainArk Explorer</h1>
+        <p style="margin: 0.5rem 0; opacity: 0.8;">Loading blockchain data...</p>
+        <div style="
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(255,255,255,0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 1s ease-in-out infinite;
+          margin-top: 1rem;
+        "></div>
+      </div>
+      <style>
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
   </body>
 </html>

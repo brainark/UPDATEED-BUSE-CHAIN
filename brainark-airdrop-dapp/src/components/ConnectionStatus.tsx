@@ -1,9 +1,9 @@
 import React from 'react'
-import { useAccount, useNetwork } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 
 export default function ConnectionStatus() {
-  const { address, isConnected, connector } = useAccount()
-  const { chain } = useNetwork()
+  const { address, isConnected, connector, chain } = useAccount()
+  const chainId = useChainId()
 
   if (process.env.NODE_ENV !== 'development') {
     return null
@@ -18,8 +18,8 @@ export default function ConnectionStatus() {
           <>
             <div>Wallet: {connector?.name || 'Unknown'}</div>
             <div>Address: {address?.slice(0, 6)}...{address?.slice(-4)}</div>
-            <div>Chain: {chain?.name || 'Unknown'} ({chain?.id})</div>
-            <div>Expected: BrainArk (1337)</div>
+            <div>Chain: {chain?.name || 'Unknown'} ({chain?.id || chainId})</div>
+            <div>Expected: BrainArk (424242)</div>
           </>
         )}
         <div className="mt-2 pt-2 border-t border-gray-600">

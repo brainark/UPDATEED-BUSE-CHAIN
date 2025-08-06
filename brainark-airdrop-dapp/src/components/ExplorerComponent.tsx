@@ -162,7 +162,7 @@ const ExplorerComponent: React.FC = () => {
               <h4>🌐 Network Information</h4>
               <ul>
                 <li><strong>Network:</strong> BrainArk Besu</li>
-                <li><strong>Chain ID: 424242</li>
+                <li><strong>Chain ID:</strong> 424242</li>
                 <li><strong>Consensus:</strong> Proof of Authority (PoA)</li>
                 <li><strong>Block Time:</strong> ~15 seconds</li>
                 <li><strong>Native Token:</strong> BAK</li>

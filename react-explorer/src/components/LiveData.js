@@ -314,7 +314,23 @@ const LiveData = ({ web3 }) => {
           ) : latestTxs.length > 0 ? (
             <TransactionsTable transactions={latestTxs} />
           ) : (
-            <div className="error">Error loading transactions.</div>
+            <div className="no-transactions">
+              <div className="no-tx-icon">📭</div>
+              <h3>No Recent Transactions</h3>
+              <p>The blockchain is running but no transactions have been processed in recent blocks.</p>
+              <div className="no-tx-info">
+                <p><strong>This is normal for a new blockchain!</strong></p>
+                <p>Transactions will appear here once users start interacting with the network.</p>
+                <div className="no-tx-actions">
+                  <button onClick={refreshData} className="refresh-btn">
+                    🔄 Refresh Data
+                  </button>
+                  <a href="https://brainark.online" target="_blank" rel="noopener noreferrer" className="dapp-link">
+                    🎁 Try the Airdrop DApp
+                  </a>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

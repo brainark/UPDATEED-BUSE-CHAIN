@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { cspHelpers } from '../utils/security';
+import WalletConnectTest from './WalletConnectTest';
 
 const WalletTroubleshooting = () => {
   const [walletInfo, setWalletInfo] = useState(null);
@@ -113,6 +114,8 @@ const WalletTroubleshooting = () => {
           </ul>
         </div>
       </div>
+      
+      <WalletConnectTest />
     </div>
   );
 };

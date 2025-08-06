@@ -132,7 +132,7 @@ export default function AutoDistributionAirdrop() {
   const loadAirdropStats = async () => {
     try {
       // Mock API call - in real implementation, fetch from backend/smart contract
-      const mockStats = {
+      const mockStats: AirdropStats = {
         totalParticipants: Math.floor(245678 + Math.random() * 100), // Simulate growth
         targetParticipants: 1000000,
         progressPercentage: 0,
@@ -280,7 +280,7 @@ export default function AutoDistributionAirdrop() {
       })
 
       toast.success('🎉 Successfully registered for airdrop!')
-      toast.info(`You're in batch ${distributionInfo.batch} - tokens will be distributed ${distributionInfo.estimatedTime}`)
+      toast.success(`You're in batch ${distributionInfo.batch} - tokens will be distributed ${distributionInfo.estimatedTime}`)
       
     } catch (error) {
       console.error('Error registering for airdrop:', error)
@@ -455,24 +455,24 @@ export default function AutoDistributionAirdrop() {
         </div>
 
         {/* Airdrop Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 mb-12">
-          <div className="card-brilliant text-center p-6">
-            <h3 className="text-3xl font-bold text-red-500 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+          <div className="card-brilliant text-center p-4 sm:p-6">
+            <h3 className="text-2xl sm:text-3xl font-bold text-red-500 mb-2">
               {AIRDROP_CONFIG.COINS_PER_USER}
             </h3>
-            <p className="text-gray-600">BAK per User</p>
+            <p className="text-gray-600 text-sm sm:text-base">BAK per User</p>
           </div>
-          <div className="card-brilliant text-center p-6">
-            <h3 className="text-3xl font-bold text-red-500 mb-2">
+          <div className="card-brilliant text-center p-4 sm:p-6">
+            <h3 className="text-2xl sm:text-3xl font-bold text-red-500 mb-2">
               {AIRDROP_CONFIG.REFERRAL_BONUS}
             </h3>
-            <p className="text-gray-600">BAK per Referral</p>
+            <p className="text-gray-600 text-sm sm:text-base">BAK per Referral</p>
           </div>
-          <div className="card-brilliant text-center p-6">
-            <h3 className="text-3xl font-bold text-red-500 mb-2">
+          <div className="card-brilliant text-center p-4 sm:p-6 sm:col-span-2 md:col-span-1">
+            <h3 className="text-2xl sm:text-3xl font-bold text-red-500 mb-2">
               {(AIRDROP_CONFIG.TOTAL_SUPPLY / 1_000_000).toFixed(0)}M
             </h3>
-            <p className="text-gray-600">Total Pool</p>
+            <p className="text-gray-600 text-sm sm:text-base">Total Pool</p>
           </div>
         </div>
 

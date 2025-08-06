@@ -1,0 +1,45 @@
+{
+  "name": "BrainArk Coin",
+  "symbol": "BAK",
+  "decimals": 18,
+  "description": "BrainArk Coin (BAK) is the native cryptocurrency of the BrainArk Besu Layer 1 blockchain, serving as the primary medium of exchange, transaction fees, and network security.",
+  "image": "ipfs://bafkreibz6qjjdmxnvqlg5wreayzqvkub3w4movhsptx4fl2e5h5h4z24ei",
+  "external_link": "https://brainark.online",
+  "background_color": "667eea",
+  "properties": {
+    "blockchain": "BrainArk Besu Network (Layer 1)",
+    "chain_id": 424242,
+    "contract_address": "Native Coin (No contract address)",
+    "total_supply": "1000000000000000000000000000",
+    "website": "https://brainark.online",
+    "explorer": "https://explorer.brainark.online",
+    "whitepaper": "https://brainark.online/whitepaper.pdf"
+  },
+  "attributes": [
+    {
+      "trait_type": "Blockchain",
+      "value": "BrainArk Besu Layer 1"
+    },
+    {
+      "trait_type": "Type",
+      "value": "Native Coin"
+    },
+    {
+      "trait_type": "Layer",
+      "value": "Layer 1"
+    },
+    {
+      "trait_type": "Consensus",
+      "value": "IBFT"
+    },
+    {
+      "trait_type": "Use Case",
+      "value": "Native Currency & Gas Fees"
+    }
+  ],
+  "social_links": {
+    "twitter": "https://x.com/sdogcoin1?s=21",
+    "telegram": "https://t.me/Brainark_Besu_BlockChain",
+    "github": "https://github.com/brainark"
+  }
+}

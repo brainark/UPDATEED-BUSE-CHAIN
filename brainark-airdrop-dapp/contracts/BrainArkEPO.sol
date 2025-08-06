@@ -224,18 +224,18 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
     }
 
     /**
-     * @notice Transfer BAK tokens from funding wallet
+     * @notice Transfer BAK tokens from contract to recipient
      * @param to Recipient address
      * @param amount Amount of BAK tokens
      */
     function _transferBAKFromFunding(address to, uint256 amount) internal {
-        // In a real implementation with native tokens, this would transfer from funding wallet
-        // For now, we'll emit an event for tracking
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Invalid amount");
+        require(address(this).balance >= amount, "Insufficient BAK balance");
         
-        // This would be implemented with actual native token transfer logic
-        // The funding wallet would need to have sufficient BAK balance
+        // Transfer native BAK tokens from contract to recipient
+        (bool success, ) = payable(to).call{value: amount}("");
+        require(success, "BAK transfer failed");
     }
 
     // Admin functions

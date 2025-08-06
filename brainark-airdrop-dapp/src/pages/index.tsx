@@ -2,15 +2,16 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import Layout from '@/components/Layout'
 import Hero from '@/components/Hero'
-import AutoDistributionAirdrop from '@/components/AutoDistributionAirdrop'
+import AutoDistributionAirdropWithAppwrite from '@/components/AutoDistributionAirdropWithAppwrite'
 import EnhancedEPOWithBondingCurve from '@/components/EnhancedEPOWithBondingCurve'
 import BrainArkExplorer from '@/components/BrainArkExplorer'
 import UseCasesSection from '@/components/UseCasesSection'
 import ComprehensiveWhitepaper from '@/components/ComprehensiveWhitepaper'
+import BenchmarkComparison from '@/components/BenchmarkComparison'
 import StatsSection from '@/components/StatsSection'
 
 export default function Home() {
-  const [activeSection, setActiveSection] = useState<'hero' | 'airdrop' | 'epo' | 'usecases' | 'explorer' | 'whitepaper'>('hero')
+  const [activeSection, setActiveSection] = useState<'hero' | 'airdrop' | 'epo' | 'usecases' | 'explorer' | 'whitepaper' | 'benchmark'>('hero')
 
   // Listen for navigation events from Hero component
   useEffect(() => {
@@ -49,63 +50,80 @@ export default function Home() {
               <nav className="flex justify-start sm:justify-center space-x-1 sm:space-x-2 py-3 sm:py-4 overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => setActiveSection('hero')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'hero'
                       ? 'bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 text-white shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  🏠 Home
+                  <span className="hidden sm:inline">🏠 Home</span>
+                  <span className="sm:hidden">🏠</span>
                 </button>
                 <button
                   onClick={() => setActiveSection('airdrop')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'airdrop'
                       ? 'btn-airdrop shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  🎁 Airdrop
+                  <span className="hidden sm:inline">🎁 Airdrop</span>
+                  <span className="sm:hidden">🎁</span>
                 </button>
                 <button
                   onClick={() => setActiveSection('epo')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'epo'
                       ? 'btn-epo shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  🦄 EPO
+                  <span className="hidden sm:inline">🦄 EPO</span>
+                  <span className="sm:hidden">🦄</span>
                 </button>
                 <button
                   onClick={() => setActiveSection('usecases')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'usecases'
                       ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700 text-white shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  🚀 Use Cases
+                  <span className="hidden sm:inline">🚀 Use Cases</span>
+                  <span className="sm:hidden">🚀</span>
                 </button>
                 <button
                   onClick={() => setActiveSection('explorer')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'explorer'
                       ? 'btn-explorer shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  🔍 Explorer
+                  <span className="hidden sm:inline">🔍 Explorer</span>
+                  <span className="sm:hidden">🔍</span>
                 </button>
                 <button
                   onClick={() => setActiveSection('whitepaper')}
-                  className={`px-3 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-sm sm:text-base ${
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
                     activeSection === 'whitepaper'
                       ? 'btn-whitepaper shadow-lg transform scale-105'
                       : 'text-gray-300 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  📄 Whitepaper
+                  <span className="hidden sm:inline">📄 Whitepaper</span>
+                  <span className="sm:hidden">📄</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection('benchmark')}
+                  className={`px-2 sm:px-4 py-2 sm:py-3 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-xs sm:text-sm md:text-base min-h-[44px] flex items-center justify-center ${
+                    activeSection === 'benchmark'
+                      ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-white shadow-lg transform scale-105'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <span className="hidden sm:inline">⚡ Benchmark</span>
+                  <span className="sm:hidden">⚡</span>
                 </button>
               </nav>
             </div>
@@ -122,7 +140,7 @@ export default function Home() {
             
             {activeSection === 'airdrop' && (
               <div className="animate-fade-in">
-                <AutoDistributionAirdrop />
+                <AutoDistributionAirdropWithAppwrite />
               </div>
             )}
             
@@ -147,6 +165,12 @@ export default function Home() {
             {activeSection === 'whitepaper' && (
               <div className="animate-fade-in">
                 <ComprehensiveWhitepaper />
+              </div>
+            )}
+
+            {activeSection === 'benchmark' && (
+              <div className="animate-fade-in">
+                <BenchmarkComparison />
               </div>
             )}
           </div>

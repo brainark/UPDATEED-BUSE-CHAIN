@@ -4,7 +4,8 @@ import AirdropComponent from './components/AirdropComponent';
 import EnhancedUniswapV3EPOComponent from './components/EnhancedUniswapV3EPOComponent';
 import ExplorerComponent from './components/ExplorerComponent';
 import WhitepaperComponent from './components/WhitepaperComponent';
-import { networkDetector, connectMetaMask, getNetworkStatus, switchToCorrectNetwork, getCurrentNetworkConfig } from './utils/networkDetection';
+import { networkDetector, getNetworkStatus, switchToCorrectNetwork, getCurrentNetworkConfig } from './utils/networkDetection';
+import { providerDetector, getProviderInfo } from './utils/providerDetection';
 
 function App() {
   const [activeComponent, setActiveComponent] = useState('home');
@@ -67,25 +68,36 @@ function App() {
     setIsConnecting(true);
     
     try {
-      const result = await connectMetaMask();
+      console.log('Connecting to MetaMask...');
+
+      // Connect using the enhanced provider detector
+      const connectionResult = await providerDetector.connectMetaMask();
       
-      if (result.success) {
-        setWalletAddress(result.account);
+      if (connectionResult.success) {
+        setWalletAddress(connectionResult.account);
         setIsWalletConnected(true);
         setShowNetworkInfo(false);
+        
+        // Check and switch network if needed
+        const networkCheck = await networkDetector.checkNetworkMatch();
+        if (!networkCheck.isCorrect) {
+          await switchToCorrectNetwork();
+        }
         
         // Update network status
         const status = await getNetworkStatus();
         setNetworkStatus(status);
         setShowSwitchButton(status.showSwitchButton);
         
-        console.log(`Connected to ${result.network} network:`, result.networkConfig);
+        console.log('Successfully connected to MetaMask');
       }
 
     } catch (error) {
       console.error('MetaMask connection error:', error);
       
-      if (error.message.includes('MetaMask is not installed')) {
+      if (error.message.includes('Already processing eth_requestAccounts')) {
+        alert('Connection request already in progress. Please wait and try again.');
+      } else if (error.message.includes('MetaMask is not installed')) {
         alert('MetaMask is not installed. Please install MetaMask extension first.');
         window.open('https://metamask.io/download/', '_blank');
       } else if (error.message.includes('No accounts found')) {

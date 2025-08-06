@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { EPO_CONFIG } from '@/utils/config'
 import AutoWalletConnection from './AutoWalletConnection'
-import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon, TrendingUpIcon, TrendingDownIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline'
 
 interface SupportedToken {
   symbol: string
@@ -529,9 +529,9 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
             <div className="text-lg font-bold text-blue-600 flex items-center justify-center">
               ${bondingCurve.nextPrice.toFixed(4)}
               {priceChange > 0 ? (
-                <TrendingUpIcon className="h-4 w-4 ml-1 text-green-500" />
+                <ArrowTrendingUpIcon className="h-4 w-4 ml-1 text-green-500" />
               ) : (
-                <TrendingDownIcon className="h-4 w-4 ml-1 text-red-500" />
+                <ArrowTrendingDownIcon className="h-4 w-4 ml-1 text-red-500" />
               )}
             </div>
           </div>

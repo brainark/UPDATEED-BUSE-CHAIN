@@ -1,8 +1,8 @@
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: url('https://ipfs.io/ipfs/bafkreieg4g4l6vaa6ym3ktqhbjxylxsbkwec2i7oi2hrujpevj6p3ea5mm') no-repeat center center fixed;
-  background-size: cover;
-  color: #2c1810;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  background-attachment: fixed;
+  color: #ffffff;
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -11,6 +11,7 @@ body {
   align-items: center;
   justify-content: flex-start;
   position: relative;
+  overflow-x: hidden;
 }
 
 body::before {
@@ -20,9 +21,18 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 248, 240, 0.15); /* Very light overlay to preserve background */
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   z-index: 0;
   pointer-events: none;
+  animation: backgroundShift 20s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 /* Ensure main content is above overlay */
@@ -38,4 +48,34 @@ body > * {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.6);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.8);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: #ffffff;
 }

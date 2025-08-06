@@ -27,9 +27,9 @@ export default function Hero({ onNavigateToSection }: HeroProps = {}) {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16">
             <button
-              className="btn-airdrop inline-flex items-center text-lg px-8 py-4"
+              className="btn-airdrop inline-flex items-center text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto max-w-xs hover:scale-105 transform transition-all duration-200"
               onClick={() => {
                 if (onNavigateToSection) {
                   onNavigateToSection('airdrop')
@@ -40,13 +40,13 @@ export default function Hero({ onNavigateToSection }: HeroProps = {}) {
                 }
               }}
             >
-              <GiftIcon className="h-6 w-6 mr-2" />
+              <GiftIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
               Join Airdrop
-              <ArrowRightIcon className="h-5 w-5 ml-2" />
+              <ArrowRightIcon className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
             </button>
             
             <button
-              className="btn-epo inline-flex items-center text-lg px-8 py-4"
+              className="btn-epo inline-flex items-center text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto max-w-xs hover:scale-105 transform transition-all duration-200"
               onClick={() => {
                 if (onNavigateToSection) {
                   onNavigateToSection('epo')
@@ -56,12 +56,12 @@ export default function Hero({ onNavigateToSection }: HeroProps = {}) {
                 }
               }}
             >
-              <CurrencyDollarIcon className="h-6 w-6 mr-2" />
+              <CurrencyDollarIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
               Join EPO
             </button>
 
             <button
-              className="btn-usecases inline-flex items-center text-lg px-8 py-4"
+              className="btn-usecases inline-flex items-center text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto max-w-xs hover:scale-105 transform transition-all duration-200"
               onClick={() => {
                 if (onNavigateToSection) {
                   onNavigateToSection('usecases')

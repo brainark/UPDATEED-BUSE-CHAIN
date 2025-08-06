@@ -63,11 +63,11 @@ export default function IntegratedExplorer() {
         const blocks: Block[] = []
         for (let i = 0; i < 5; i++) {
           try {
-            const block = await wallet.web3.eth.getBlock(blockNumber - i, true)
+            const block = await wallet.web3.eth.getBlock(Number(blockNumber) - i, true)
             if (block) {
               blocks.push({
-                number: block.number,
-                hash: block.hash,
+                number: Number(block.number),
+                hash: block.hash || 'Unknown',
                 timestamp: Number(block.timestamp),
                 transactions: block.transactions.length,
                 gasUsed: block.gasUsed.toString(),
@@ -76,7 +76,7 @@ export default function IntegratedExplorer() {
               })
             }
           } catch (error) {
-            console.error(`Error fetching block ${blockNumber - i}:`, error)
+            console.error(`Error fetching block ${Number(blockNumber) - i}:`, error)
           }
         }
 
@@ -89,14 +89,14 @@ export default function IntegratedExplorer() {
               const tx = latestBlock.transactions[i]
               if (typeof tx === 'object' && tx.hash) {
                 transactions.push({
-                  hash: tx.hash,
-                  from: tx.from,
-                  to: tx.to || 'Contract Creation',
-                  value: wallet.web3.utils.fromWei(tx.value, 'ether'),
-                  gasPrice: wallet.web3.utils.fromWei(tx.gasPrice, 'gwei'),
-                  gasUsed: tx.gas?.toString() || '0',
-                  blockNumber: tx.blockNumber || blockNumber,
-                  timestamp: Number(latestBlock.timestamp),
+                  hash: tx.hash,,
+                  from: tx.from,,
+                  to: tx.to || 'Contract Creation',,
+                  value: wallet.web3.utils.fromWei(tx.value, 'ether'),,
+                  gasPrice: wallet.web3.utils.fromWei(tx.gasPrice, 'gwei'),,
+                  gasUsed: tx.gas?.toString() || '0',,
+                  blockNumber: tx.blockNumber || blockNumber,,
+                  timestamp: Number(latestBlock.timestamp),,
                   status: 'success'
                 })
               }

@@ -58,3 +58,29 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+# Next.js build output
+brainark-airdrop-dapp/.next/
+
+# React build output
+react-explorer/build/
+
+# Node modules (if not already covered)
+brainark-airdrop-dapp/node_modules/
+react-explorer/node_modules/
+
+# Validator data and logs
+validators/*/data/*.sst
+validators/*/data/*.log
+validators/*/data/LOG*
+validators/*/data/MANIFEST-*
+validators/*/data/OPTIONS-*
+validators/*/data/CURRENT
+validators/*/data/IDENTITY
+validators/*/data/LOCK
+
+# Python cache and temp files
+*.pyc
+__pycache__/
+*.bak
+*.tmp

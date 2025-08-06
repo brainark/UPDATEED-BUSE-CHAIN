@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title BrainArk Airdrop Contract
@@ -220,17 +222,18 @@ contract BrainArkAirdrop is ReentrancyGuard, Ownable, Pausable {
     }
 
     /**
-     * @notice Transfer native BAK tokens from funding wallet
+     * @notice Transfer native BAK tokens to recipient
      * @param to Recipient address
      * @param amount Amount to transfer
      */
     function _transferFromFunding(address to, uint256 amount) internal {
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Invalid amount");
+        require(address(this).balance >= amount, "Insufficient contract balance");
         
-        // Transfer native BAK tokens
-        // This requires the funding wallet to have sufficient balance
-        payable(to).transfer(amount);
+        // Transfer native BAK tokens from contract to recipient
+        (bool success, ) = payable(to).call{value: amount}("");
+        require(success, "BAK transfer failed");
     }
 
     // Admin functions

@@ -36,14 +36,22 @@ const getNetworkConfig = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const networkOverride = urlParams.get('network');
   
-  if (networkOverride === 'production') {
-    return NETWORK_CONFIGS.production;
-  } else if (networkOverride === 'local' || isDevelopment) {
+  if (networkOverride === 'local') {
     return NETWORK_CONFIGS.local;
+  } else if (networkOverride === 'production' || !isDevelopment) {
+    return NETWORK_CONFIGS.production;
   }
   
-  // Default to local for development
-  return NETWORK_CONFIGS.local;
+  // Default to production for deployed version, local for development
+  return isDevelopment ? NETWORK_CONFIGS.local : NETWORK_CONFIGS.production;
+};
+
+// Function to switch network configuration
+export const switchNetworkConfig = (networkKey) => {
+  if (NETWORK_CONFIGS[networkKey]) {
+    return NETWORK_CONFIGS[networkKey];
+  }
+  return getNetworkConfig();
 };
 
 export const CURRENT_NETWORK = getNetworkConfig();

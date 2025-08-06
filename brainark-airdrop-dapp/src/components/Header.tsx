@@ -64,13 +64,13 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4 mobile-menu">
             <div className="space-y-4">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block text-gray-700 dark:text-gray-300 hover:text-brainark-500 dark:hover:text-brainark-400 font-medium transition-colors duration-200"
+                  className="block py-3 px-2 text-gray-700 dark:text-gray-300 hover:text-brainark-500 dark:hover:text-brainark-400 font-medium transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.name}

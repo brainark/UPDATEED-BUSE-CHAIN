@@ -3,8 +3,8 @@
 
 export const NETWORK_CONFIGS = {
   local: {
-    CHAIN_ID: '0x539', // 1337 in hex
-    CHAIN_ID_DECIMAL: 1337,
+    CHAIN_ID: '0x67932', // 424242 in hex
+    CHAIN_ID_DECIMAL: 424242,
     CHAIN_NAME: 'BrainArk Besu Network (Local)',
     RPC_URL: 'http://localhost:8545',
     CURRENCY_SYMBOL: 'BAK',
@@ -13,14 +13,14 @@ export const NETWORK_CONFIGS = {
     BLOCK_EXPLORER_URL: 'http://localhost:3001'
   },
   production: {
-    CHAIN_ID: '0x7A69', // 31337 in hex
-    CHAIN_ID_DECIMAL: 31337,
-    CHAIN_NAME: 'BrainArk Besu Network (Production)',
-    RPC_URL: 'https://rpc.brainark.network',
+    CHAIN_ID: '0x67932', // 424242 in hex
+    CHAIN_ID_DECIMAL: 424242,
+    CHAIN_NAME: 'BrainArk Besu Network',
+    RPC_URL: 'https://rpc.brainark.online',
     CURRENCY_SYMBOL: 'BAK',
     CURRENCY_NAME: 'BrainArk Token',
     CURRENCY_DECIMALS: 18,
-    BLOCK_EXPLORER_URL: 'https://explorer.brainark.network'
+    BLOCK_EXPLORER_URL: 'https://explorer.brainark.online'
   }
 };
 
@@ -243,23 +243,13 @@ export class NetworkDetector {
   getGasSettings() {
     const config = this.getCurrentNetworkConfig();
     
-    if (config.CHAIN_ID_DECIMAL === 1337) {
-      // Local network - lower gas settings
-      return {
-        gasPrice: '1000000000', // 1 gwei
-        gasLimit: '21000',
-        maxFeePerGas: '2000000000', // 2 gwei
-        maxPriorityFeePerGas: '1000000000' // 1 gwei
-      };
-    } else {
-      // Production network - standard gas settings
-      return {
-        gasPrice: '20000000000', // 20 gwei
-        gasLimit: '21000',
-        maxFeePerGas: '40000000000', // 40 gwei
-        maxPriorityFeePerGas: '2000000000' // 2 gwei
-      };
-    }
+    // BrainArk network uses very low gas prices (1000 wei)
+    return {
+      gasPrice: '1000', // 1000 wei (matches blockchain config)
+      gasLimit: '21000',
+      maxFeePerGas: '2000', // 2000 wei
+      maxPriorityFeePerGas: '1000' // 1000 wei
+    };
   }
 }
 

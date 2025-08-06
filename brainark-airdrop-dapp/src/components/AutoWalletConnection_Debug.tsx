@@ -74,7 +74,7 @@ export default function AutoWalletConnectionDebug({ onConnectionChange }: AutoWa
   // Enhanced MetaMask detection with more debugging
   const checkMetaMaskInstallation = useCallback(() => {
     if (typeof window === 'undefined') {
-      setDebugInfo(prev => ({ ...prev, windowUndefined: true }))
+      setDebugInfo((prev: any) => ({ ...prev, windowUndefined: true }))
       return false
     }
     
