@@ -1,82 +1,18 @@
 {
   "name": "brainark-airdrop-dapp",
   "version": "1.0.0",
-  "description": "BrainArk Airdrop & EPO DApp - Next.js with Tailwind CSS",
-  "private": true,
+  "description": "BrainArk Airdrop DApp",
+  "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js --network brainark",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
-    "deploy:tokens": "hardhat run scripts/deploy-payment-tokens.js --network brainark",
-    "deploy:epo": "hardhat run scripts/deploy-enhanced-epo.js --network brainark",
-    "deploy:all": "npm run deploy:tokens && npm run deploy:epo",
-    "test": "hardhat test",
-    "test:all": "node test/run-all-tests.js",
-    "test:contracts": "hardhat test test/*.test.js",
-    "test:frontend": "jest test/frontend/*.test.js --verbose",
-    "test:integration": "hardhat test test/integration/*.test.js",
-    "test:airdrop": "hardhat test test/BrainArkAirdrop.test.js",
-    "test:epo": "hardhat test test/BrainArkEPO.test.js",
-    "test:coverage": "hardhat coverage",
-    "test:gas": "hardhat test --grep 'gas|Gas'",
-    "test:security": "npm run test:slither && npm run test:mythril",
-    "test:slither": "slither . --exclude-dependencies || echo 'Slither not installed'",
-    "test:mythril": "mythril analyze contracts/BrainArkAirdrop.sol || echo 'Mythril not installed'"
-  },
-  "dependencies": {
-    "@headlessui/react": "^1.7.17",
-    "@heroicons/react": "^2.0.18",
-    "@rainbow-me/rainbowkit": "^2.2.8",
-    "@tanstack/react-query": "^5.84.1",
-    "appwrite": "^18.2.0",
-    "autoprefixer": "^10.4.16",
-    "axios": "^1.6.0",
-    "clsx": "^2.0.0",
-    "ethers": "^6.8.0",
-    "firebase": "^12.0.0",
-    "lucide-react": "^0.292.0",
-    "next": "^14.0.0",
-    "postcss": "^8.4.31",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-hot-toast": "^2.4.1",
-    "tailwind-merge": "^2.0.0",
-    "tailwindcss": "^3.3.0",
-    "viem": "^2.33.2",
-    "wagmi": "^2.16.1"
+    "test": "hardhat test"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "@openzeppelin/contracts": "^5.0.0",
-    "@testing-library/jest-dom": "^6.1.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.5.0",
-    "@types/node": "^20.8.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "dotenv": "^16.3.0",
-    "eslint": "^8.51.0",
-    "eslint-config-next": "^14.0.0",
-    "hardhat": "^2.26.2",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "solidity-coverage": "^0.8.5",
-    "typescript": "^5.2.0"
-  },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": [
-      "<rootDir>/test/setup.js"
-    ],
-    "testMatch": [
-      "<rootDir>/test/frontend/**/*.test.js"
-    ],
-    "moduleNameMapping": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    }
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.1",
+    "chai": "^4.5.0",
+    "dotenv": "^16.6.1",
+    "hardhat": "^2.19.5"
   }
 }

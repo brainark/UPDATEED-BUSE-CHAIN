@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -8,9 +8,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
- * @title BrainArk EPO (Early Public Offering) Contract
+ * @title Enhanced BrainArk EPO (Early Public Offering) Contract
  * @dev Allows users to purchase BAK tokens with various payment tokens
- * @notice Fixed price of $0.02 per BAK token, no time limits
+ * @notice Fixed price of $0.02 per BAK token, with multi-wallet treasury management
  */
 contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
     using SafeERC20 for IERC20;
@@ -22,6 +22,7 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         uint256 paymentAmount,
         uint256 bakAmount,
         uint256 usdValue,
+        address treasuryWallet,
         uint256 timestamp
     );
     
@@ -44,6 +45,13 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         uint256 timestamp
     );
 
+    event TreasuryWalletUpdated(
+        address indexed token,
+        address indexed oldWallet,
+        address indexed newWallet,
+        uint256 timestamp
+    );
+
     // Structs
     struct PaymentToken {
         bool enabled;
@@ -52,6 +60,7 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         uint256 minPurchaseUSD; // Minimum purchase in USD
         uint256 maxPurchaseUSD; // Maximum purchase in USD
         string symbol;
+        address treasuryWallet; // Specific wallet for this token
     }
 
     struct PurchaseInfo {
@@ -72,6 +81,14 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         bool isActive;
     }
 
+    struct WalletConfig {
+        address ethWallet;      // For ETH payments
+        address usdtWallet;     // For USDT payments
+        address usdcWallet;     // For USDC payments
+        address bnbWallet;      // For BNB payments
+        address defaultWallet;  // Fallback wallet
+    }
+
     // State variables
     uint256 public constant BAK_PRICE_USD = 0.02 * 10**18; // $0.02 with 18 decimals
     uint256 public constant TOTAL_BAK_SUPPLY = 100_000_000 * 10**18; // 100M BAK
@@ -90,21 +107,32 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
     uint256 public totalBakSold;
     uint256 public totalUSDRaised;
     
-    // Treasury wallet for receiving payments
-    address public immutable treasuryWallet;
+    // Treasury wallet configuration
+    WalletConfig public walletConfig;
     
     // Contract funding (BAK tokens are sent from this wallet)
     address public immutable fundingWallet;
 
     constructor(
-        address _treasuryWallet,
-        address _fundingWallet
+        address _fundingWallet,
+        address _ethWallet,
+        address _usdtWallet,
+        address _usdcWallet,
+        address _bnbWallet,
+        address _defaultWallet
     ) {
-        require(_treasuryWallet != address(0), "Invalid treasury wallet");
         require(_fundingWallet != address(0), "Invalid funding wallet");
+        require(_defaultWallet != address(0), "Invalid default wallet");
         
-        treasuryWallet = _treasuryWallet;
         fundingWallet = _fundingWallet;
+        
+        walletConfig = WalletConfig({
+            ethWallet: _ethWallet != address(0) ? _ethWallet : _defaultWallet,
+            usdtWallet: _usdtWallet != address(0) ? _usdtWallet : _defaultWallet,
+            usdcWallet: _usdcWallet != address(0) ? _usdcWallet : _defaultWallet,
+            bnbWallet: _bnbWallet != address(0) ? _bnbWallet : _defaultWallet,
+            defaultWallet: _defaultWallet
+        });
     }
 
     /**
@@ -117,7 +145,7 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         address paymentToken,
         uint256 paymentAmount,
         uint256 minBakAmount
-    ) external nonReentrant whenNotPaused {
+    ) external payable nonReentrant whenNotPaused {
         require(paymentTokens[paymentToken].enabled, "Payment token not supported");
         require(paymentAmount > 0, "Payment amount must be greater than 0");
         
@@ -135,6 +163,9 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         
         // Check supply limits
         require(totalBakSold + bakAmount <= TOTAL_BAK_SUPPLY, "Exceeds available supply");
+        
+        // Determine treasury wallet for this payment
+        address treasuryWallet = getTreasuryWallet(paymentToken);
         
         // Transfer payment token from user to treasury
         if (paymentToken == address(0)) {
@@ -173,8 +204,39 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
             paymentAmount,
             bakAmount,
             usdValue,
+            treasuryWallet,
             block.timestamp
         );
+    }
+
+    /**
+     * @notice Get appropriate treasury wallet for payment token
+     * @param paymentToken Address of the payment token
+     * @return Treasury wallet address for the token
+     */
+    function getTreasuryWallet(address paymentToken) public view returns (address) {
+        // If token has specific wallet configured, use it
+        if (paymentTokens[paymentToken].treasuryWallet != address(0)) {
+            return paymentTokens[paymentToken].treasuryWallet;
+        }
+        
+        // Otherwise use configured wallet based on token type
+        if (paymentToken == address(0)) {
+            return walletConfig.ethWallet;
+        }
+        
+        // For ERC20 tokens, try to match by symbol or use default
+        string memory symbol = paymentTokens[paymentToken].symbol;
+        
+        if (keccak256(bytes(symbol)) == keccak256(bytes("USDT"))) {
+            return walletConfig.usdtWallet;
+        } else if (keccak256(bytes(symbol)) == keccak256(bytes("USDC"))) {
+            return walletConfig.usdcWallet;
+        } else if (keccak256(bytes(symbol)) == keccak256(bytes("BNB"))) {
+            return walletConfig.bnbWallet;
+        }
+        
+        return walletConfig.defaultWallet;
     }
 
     /**
@@ -241,7 +303,7 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
     // Admin functions
     
     /**
-     * @notice Add or update payment token
+     * @notice Add or update payment token with optional treasury wallet
      * @param token Token address (address(0) for ETH)
      * @param enabled Whether token is enabled
      * @param decimals Token decimals
@@ -249,6 +311,7 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
      * @param minPurchaseUSD Minimum purchase in USD
      * @param maxPurchaseUSD Maximum purchase in USD
      * @param symbol Token symbol
+     * @param treasuryWallet Specific treasury wallet for this token (optional)
      */
     function updatePaymentToken(
         address token,
@@ -257,7 +320,8 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
         uint256 priceUSD,
         uint256 minPurchaseUSD,
         uint256 maxPurchaseUSD,
-        string memory symbol
+        string memory symbol,
+        address treasuryWallet
     ) external onlyOwner {
         require(priceUSD > 0, "Invalid price");
         require(maxPurchaseUSD > minPurchaseUSD, "Invalid purchase limits");
@@ -273,10 +337,55 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
             priceUSD: priceUSD,
             minPurchaseUSD: minPurchaseUSD,
             maxPurchaseUSD: maxPurchaseUSD,
-            symbol: symbol
+            symbol: symbol,
+            treasuryWallet: treasuryWallet
         });
         
         emit PaymentTokenUpdated(token, enabled, priceUSD, block.timestamp);
+    }
+
+    /**
+     * @notice Update treasury wallet for specific token
+     * @param token Token address
+     * @param newWallet New treasury wallet address
+     */
+    function updateTokenTreasuryWallet(
+        address token,
+        address newWallet
+    ) external onlyOwner {
+        require(paymentTokens[token].enabled, "Token not configured");
+        require(newWallet != address(0), "Invalid wallet address");
+        
+        address oldWallet = paymentTokens[token].treasuryWallet;
+        paymentTokens[token].treasuryWallet = newWallet;
+        
+        emit TreasuryWalletUpdated(token, oldWallet, newWallet, block.timestamp);
+    }
+
+    /**
+     * @notice Update wallet configuration
+     * @param _ethWallet ETH treasury wallet
+     * @param _usdtWallet USDT treasury wallet
+     * @param _usdcWallet USDC treasury wallet
+     * @param _bnbWallet BNB treasury wallet
+     * @param _defaultWallet Default treasury wallet
+     */
+    function updateWalletConfig(
+        address _ethWallet,
+        address _usdtWallet,
+        address _usdcWallet,
+        address _bnbWallet,
+        address _defaultWallet
+    ) external onlyOwner {
+        require(_defaultWallet != address(0), "Invalid default wallet");
+        
+        walletConfig = WalletConfig({
+            ethWallet: _ethWallet != address(0) ? _ethWallet : _defaultWallet,
+            usdtWallet: _usdtWallet != address(0) ? _usdtWallet : _defaultWallet,
+            usdcWallet: _usdcWallet != address(0) ? _usdcWallet : _defaultWallet,
+            bnbWallet: _bnbWallet != address(0) ? _bnbWallet : _defaultWallet,
+            defaultWallet: _defaultWallet
+        });
     }
 
     /**
@@ -325,6 +434,14 @@ contract BrainArkEPO is ReentrancyGuard, Ownable, Pausable {
 
     // View functions
     
+    /**
+     * @notice Get wallet configuration
+     * @return WalletConfig struct with all treasury wallets
+     */
+    function getWalletConfig() external view returns (WalletConfig memory) {
+        return walletConfig;
+    }
+
     /**
      * @notice Get user purchase history
      * @param user User address
