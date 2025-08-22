@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { CONTRACT_ADDRESSES, EPO_CONFIG } from '../utils/config';
+import { EPO_ABI } from '../utils/contracts';
 
 interface EPOComponentProps {
   walletAddress: string;

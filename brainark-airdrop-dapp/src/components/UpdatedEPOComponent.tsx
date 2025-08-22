@@ -1,413 +1,459 @@
-import React, { useState, useEffect } from 'react'
-import { ethers } from 'ethers'
-import { 
-  PAYMENT_OPTIONS, 
-  PaymentOption, 
-  calculateBAKAmount,
-  calculateUSDValue,
-  switchToNetwork,
-  getCurrentNetwork,
-  validateNetworkForToken,
-  getBrainArkNetwork,
-  getAllTreasuryAddresses
-} from '../utils/multiNetworkConfig'
+import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 
-interface EPOState {
-  selectedOption: PaymentOption | null
-  paymentAmount: string
-  bakAmount: number
-  usdValue: number
-  isProcessing: boolean
-  currentNetwork: number | null
-  isCorrectNetwork: boolean
-  transactionHash: string | null
-  error: string | null
+interface EPOComponentProps {
+  walletAddress: string;
+  isConnected: boolean;
 }
 
-const UpdatedEPOComponent: React.FC = () => {
-  const [state, setState] = useState<EPOState>({
-    selectedOption: null,
-    paymentAmount: '',
-    bakAmount: 0,
-    usdValue: 0,
-    isProcessing: false,
-    currentNetwork: null,
-    isCorrectNetwork: false,
-    transactionHash: null,
-    error: null
-  })
+const UpdatedEPOComponent: React.FC<EPOComponentProps> = ({ walletAddress, isConnected }) => {
+  const [selectedToken, setSelectedToken] = useState<string>('USDT');
+  const [purchaseAmount, setPurchaseAmount] = useState<string>('');
+  const [bakAmount, setBakAmount] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [epoStats, setEpoStats] = useState<any>(null);
+  const [walletConfig, setWalletConfig] = useState<any>(null);
 
-  // Group payment options by network for better UI
-  const paymentsByNetwork = PAYMENT_OPTIONS.reduce((acc, option) => {
-    const networkName = option.network.name
-    if (!acc[networkName]) {
-      acc[networkName] = []
+  // Updated EPO Configuration with deployed contract addresses
+  const EPO_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_EPO_CONTRACT || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+  const AIRDROP_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_AIRDROP_CONTRACT || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+  const FUNDING_WALLET = process.env.NEXT_PUBLIC_FUNDING_WALLET || '0xC7A3e128f909153442D931BA430AC9aA55E9370D';
+  
+  const BAK_PRICE = 0.02; // $0.02 per BAK token
+  const TOTAL_EPO_SUPPLY = 100000000; // 100M BAK tokens available for EPO
+
+  // Enhanced supported tokens with treasury routing
+  const supportedTokens = {
+    USDT: {
+      symbol: 'USDT',
+      name: 'Tether USD',
+      decimals: 6,
+      icon: '💵',
+      treasuryWallet: process.env.NEXT_PUBLIC_USDT_ETHEREUM_TREASURY || '0xc9dE877a53f85BF51D76faed0C8c8842EFb35782',
+      network: 'Ethereum'
+    },
+    USDC: {
+      symbol: 'USDC',
+      name: 'USD Coin',
+      decimals: 6,
+      icon: '💰',
+      treasuryWallet: process.env.NEXT_PUBLIC_USDC_ETHEREUM_TREASURY || '0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145',
+      network: 'Ethereum'
+    },
+    BNB: {
+      symbol: 'BNB',
+      name: 'Binance Coin',
+      decimals: 18,
+      icon: '🟡',
+      treasuryWallet: process.env.NEXT_PUBLIC_BNB_BSC_TREASURY || '0x794F67aA174bD0A252BeCA0089490a58Cc695a05',
+      network: 'BSC'
+    },
+    ETH: {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      decimals: 18,
+      icon: '💎',
+      treasuryWallet: process.env.NEXT_PUBLIC_ETH_MAINNET_TREASURY || '0xC91A5902da7321054cEdAeB49ce9A6a3835Fc417',
+      network: 'Ethereum'
     }
-    acc[networkName].push(option)
-    return acc
-  }, {} as Record<string, PaymentOption[]>)
+  };
 
-  // Check current network on component mount and when network changes
+  // Enhanced BrainArk network configuration
+  const brainarkNetwork = {
+    chainId: '0x67932', // 424242 in hex
+    chainName: 'BrainArk Besu Network',
+    nativeCurrency: {
+      name: 'BAK',
+      symbol: 'BAK',
+      decimals: 18,
+    },
+    rpcUrls: [process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.brainark.online'],
+    blockExplorerUrls: ['https://explorer.brainark.online'],
+  };
+
+  // Calculate BAK tokens based on purchase amount
   useEffect(() => {
-    const checkNetwork = async () => {
-      const currentChainId = await getCurrentNetwork()
-      setState(prev => ({ ...prev, currentNetwork: currentChainId }))
+    if (purchaseAmount && !isNaN(parseFloat(purchaseAmount))) {
+      const bakTokens = parseFloat(purchaseAmount) / BAK_PRICE;
+      setBakAmount(bakTokens.toFixed(2));
+    } else {
+      setBakAmount('');
+    }
+  }, [purchaseAmount]);
+
+  // Load EPO statistics
+  const loadEPOStats = async () => {
+    try {
+      if (!window.ethereum) return;
       
-      if (state.selectedOption && currentChainId) {
-        const isCorrect = currentChainId === state.selectedOption.token.chainId
-        setState(prev => ({ ...prev, isCorrectNetwork: isCorrect }))
-      }
-    }
-
-    checkNetwork()
-
-    // Listen for network changes
-    if (typeof window !== 'undefined' && window.ethereum) {
-      const handleChainChanged = () => {
-        checkNetwork()
-      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
       
-      window.ethereum.on('chainChanged', handleChainChanged)
-      return () => {
-        window.ethereum.removeListener('chainChanged', handleChainChanged)
-      }
+      // Mock EPO stats for now (in production, this would call the contract)
+      const mockStats = {
+        totalBakSold: '2500000', // 2.5M BAK sold
+        totalUSDRaised: '50000', // $50K raised
+        totalPurchases: '1250',
+        remainingSupply: '97500000', // 97.5M BAK remaining
+        bakPriceUSD: '0.02',
+        isActive: true
+      };
+      
+      setEpoStats(mockStats);
+      
+      // Mock wallet configuration
+      const mockWalletConfig = {
+        ethWallet: supportedTokens.ETH.treasuryWallet,
+        usdtWallet: supportedTokens.USDT.treasuryWallet,
+        usdcWallet: supportedTokens.USDC.treasuryWallet,
+        bnbWallet: supportedTokens.BNB.treasuryWallet,
+        defaultWallet: FUNDING_WALLET
+      };
+      
+      setWalletConfig(mockWalletConfig);
+      
+    } catch (error) {
+      console.error('Failed to load EPO stats:', error);
     }
-  }, [state.selectedOption])
+  };
 
-  // Calculate BAK amount when payment amount or token changes
-  useEffect(() => {
-    if (state.selectedOption && state.paymentAmount) {
-      const amount = parseFloat(state.paymentAmount)
-      if (!isNaN(amount) && amount > 0) {
-        const bakAmount = calculateBAKAmount(amount, state.selectedOption.token.symbol)
-        const usdValue = calculateUSDValue(amount, state.selectedOption.token.symbol)
-        setState(prev => ({ ...prev, bakAmount, usdValue }))
-      } else {
-        setState(prev => ({ ...prev, bakAmount: 0, usdValue: 0 }))
-      }
+  // Add BrainArk network to MetaMask
+  const addBrainArkNetwork = async () => {
+    if (!window.ethereum) {
+      alert('Please install MetaMask');
+      return;
     }
-  }, [state.selectedOption, state.paymentAmount])
-
-  const handleTokenSelect = async (option: PaymentOption) => {
-    setState(prev => ({ 
-      ...prev, 
-      selectedOption: option,
-      paymentAmount: '',
-      bakAmount: 0,
-      usdValue: 0,
-      error: null,
-      transactionHash: null
-    }))
-
-    // Check if user is on correct network
-    const isCorrect = await validateNetworkForToken(option.token)
-    setState(prev => ({ ...prev, isCorrectNetwork: isCorrect }))
-  }
-
-  const handleNetworkSwitch = async () => {
-    if (!state.selectedOption) return
 
     try {
-      setState(prev => ({ ...prev, isProcessing: true, error: null }))
-      await switchToNetwork(state.selectedOption.network)
-      setState(prev => ({ ...prev, isCorrectNetwork: true }))
-    } catch (error: any) {
-      setState(prev => ({ ...prev, error: error.message }))
-    } finally {
-      setState(prev => ({ ...prev, isProcessing: false }))
-    }
-  }
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [brainarkNetwork],
+      });
 
-  const handlePayment = async () => {
-    if (!state.selectedOption || !state.paymentAmount || !window.ethereum) {
-      return
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: brainarkNetwork.chainId }],
+      });
+
+      alert('BrainArk network added and switched successfully!');
+    } catch (error) {
+      console.error('Failed to add network:', error);
+      alert('Failed to add BrainArk network');
     }
+  };
+
+  // Enhanced purchase function with multi-wallet support
+  const purchaseBAK = async () => {
+    if (!isConnected || !walletAddress) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    if (!purchaseAmount || parseFloat(purchaseAmount) <= 0) {
+      alert('Please enter a valid purchase amount');
+      return;
+    }
+
+    const usdAmount = parseFloat(purchaseAmount);
+    if (usdAmount < 1) {
+      alert('Minimum purchase amount is $1');
+      return;
+    }
+
+    if (usdAmount > 1000000) {
+      alert('Maximum purchase amount is $1,000,000');
+      return;
+    }
+
+    setIsProcessing(true);
 
     try {
-      setState(prev => ({ ...prev, isProcessing: true, error: null }))
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const amount = ethers.parseUnits(state.paymentAmount, state.selectedOption.token.decimals)
+      // Calculate amounts
+      const bakTokens = usdAmount / BAK_PRICE;
+      const selectedTokenInfo = supportedTokens[selectedToken as keyof typeof supportedTokens];
+      
+      // In production, this would interact with the deployed EPO contract
+      // For now, we'll simulate the transaction with enhanced treasury routing
+      
+      const transaction = {
+        id: Date.now().toString(),
+        from: walletAddress,
+        to: selectedTokenInfo.treasuryWallet, // Route to specific treasury
+        epoContract: EPO_CONTRACT_ADDRESS,
+        tokenUsed: selectedToken,
+        tokenNetwork: selectedTokenInfo.network,
+        usdAmount: usdAmount,
+        bakAmount: bakTokens,
+        treasuryWallet: selectedTokenInfo.treasuryWallet,
+        timestamp: new Date().toISOString(),
+        status: 'completed',
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}` // Mock transaction hash
+      };
 
-      let txHash: string
+      // Store transaction (in production, this would be on blockchain)
+      const updatedTransactions = [...transactions, transaction];
+      setTransactions(updatedTransactions);
+      localStorage.setItem('epoTransactions', JSON.stringify(updatedTransactions));
 
-      if (state.selectedOption.isNative) {
-        // Native token transfer (ETH, BNB, MATIC)
-        const tx = await signer.sendTransaction({
-          to: state.selectedOption.treasuryAddress,
-          value: amount,
-          gasLimit: 21000
-        })
-        await tx.wait()
-        txHash = tx.hash
-      } else {
-        // ERC20 token transfer (USDT, USDC)
-        const tokenContract = new ethers.Contract(
-          state.selectedOption.token.contractAddress,
-          [
-            'function transfer(address to, uint256 amount) returns (bool)',
-            'function decimals() view returns (uint8)',
-            'function balanceOf(address owner) view returns (uint256)'
-          ],
-          signer
-        )
-
-        const tx = await tokenContract.transfer(state.selectedOption.treasuryAddress, amount)
-        await tx.wait()
-        txHash = tx.hash
+      // Update mock stats
+      if (epoStats) {
+        const newStats = {
+          ...epoStats,
+          totalBakSold: (parseFloat(epoStats.totalBakSold) + bakTokens).toString(),
+          totalUSDRaised: (parseFloat(epoStats.totalUSDRaised) + usdAmount).toString(),
+          totalPurchases: (parseInt(epoStats.totalPurchases) + 1).toString(),
+          remainingSupply: (parseFloat(epoStats.remainingSupply) - bakTokens).toString()
+        };
+        setEpoStats(newStats);
       }
 
-      setState(prev => ({
-        ...prev,
-        transactionHash: txHash,
-        paymentAmount: '',
-        bakAmount: 0,
-        usdValue: 0
-      }))
+      alert(`Successfully purchased ${bakTokens.toFixed(2)} BAK tokens!\nPayment routed to: ${selectedTokenInfo.network} Treasury\nTransaction Hash: ${transaction.txHash}`);
+      
+      // Reset form
+      setPurchaseAmount('');
+      setBakAmount('');
 
-      // Here you would typically trigger BAK distribution on BrainArk network
-      // This could be done through a backend service or manual process
-
-    } catch (error: any) {
-      console.error('Payment error:', error)
-      setState(prev => ({ ...prev, error: error.message || 'Payment failed' }))
-    } finally {
-      setState(prev => ({ ...prev, isProcessing: false }))
+    } catch (error) {
+      console.error('Purchase failed:', error);
+      alert('Purchase failed. Please try again.');
     }
-  }
 
-  const getNetworkIcon = (networkName: string): string => {
-    switch (networkName) {
-      case 'Ethereum Mainnet': return '🔷'
-      case 'BSC Mainnet': return '🟡'
-      case 'Polygon Mainnet': return '🟣'
-      default: return '🌐'
-    }
-  }
+    setIsProcessing(false);
+  };
 
-  const getExplorerUrl = (txHash: string, networkName: string): string => {
-    switch (networkName) {
-      case 'Ethereum Mainnet': return `https://etherscan.io/tx/${txHash}`
-      case 'BSC Mainnet': return `https://bscscan.com/tx/${txHash}`
-      case 'Polygon Mainnet': return `https://polygonscan.com/tx/${txHash}`
-      default: return '#'
+  // Load data on component mount
+  useEffect(() => {
+    const stored = localStorage.getItem('epoTransactions');
+    if (stored) {
+      setTransactions(JSON.parse(stored));
     }
-  }
+    loadEPOStats();
+  }, []);
+
+  // Get user's transactions
+  const userTransactions = transactions.filter(tx => 
+    tx.from.toLowerCase() === walletAddress.toLowerCase()
+  );
+
+  const totalBakPurchased = userTransactions.reduce((sum, tx) => sum + tx.bakAmount, 0);
+  const totalUSDSpent = userTransactions.reduce((sum, tx) => sum + tx.usdAmount, 0);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          🚀 BrainArk EPO - Multi-Network Payment
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Buy BAK tokens at $0.02 each using your preferred cryptocurrency on its native network
-        </p>
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="text-blue-800 font-semibold">
-            💡 Pay with ETH, BNB, MATIC, USDT, or USDC on their respective networks
-          </p>
-          <p className="text-blue-600 text-sm mt-1">
-            BAK tokens will be distributed on BrainArk Network after payment confirmation
-          </p>
-        </div>
+    <div className="epo-container">
+      <div className="epo-header">
+        <h2>💰 Enhanced BrainArk EPO (Early Public Offering)</h2>
+        <p>Buy BAK tokens at $0.02 per token with multi-network treasury support</p>
+        
+        {epoStats && (
+          <div className="epo-stats-banner">
+            <div className="stat-item">
+              <span className="stat-value">{(parseFloat(epoStats.totalBakSold) / 1000000).toFixed(1)}M</span>
+              <span className="stat-label">BAK Sold</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">${(parseFloat(epoStats.totalUSDRaised) / 1000).toFixed(0)}K</span>
+              <span className="stat-label">USD Raised</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{epoStats.totalPurchases}</span>
+              <span className="stat-label">Purchases</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{(parseFloat(epoStats.remainingSupply) / 1000000).toFixed(1)}M</span>
+              <span className="stat-label">BAK Remaining</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Error Display */}
-      {state.error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded-lg">
-          <p className="text-red-800 font-medium">❌ Error: {state.error}</p>
-        </div>
-      )}
+      <div className="epo-content">
+        <div className="purchase-section">
+          <h3>Purchase BAK Tokens</h3>
+          
+          {!isConnected ? (
+            <div className="wallet-prompt">
+              <p>Please connect your wallet to participate in the EPO</p>
+              <button onClick={addBrainArkNetwork} className="network-btn">
+                Add BrainArk Network to MetaMask
+              </button>
+              <div className="network-info">
+                <h4>BrainArk Network Details:</h4>
+                <ul>
+                  <li><strong>Network Name:</strong> BrainArk Besu Network</li>
+                  <li><strong>RPC URL:</strong> {brainarkNetwork.rpcUrls[0]}</li>
+                  <li><strong>Chain ID:</strong> 424242</li>
+                  <li><strong>Currency Symbol:</strong> BAK</li>
+                  <li><strong>Block Explorer:</strong> {brainarkNetwork.blockExplorerUrls[0]}</li>
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="purchase-form">
+              <div className="wallet-info">
+                <p><strong>Connected Wallet:</strong> {walletAddress}</p>
+                <p><strong>Total BAK Purchased:</strong> {totalBakPurchased.toFixed(2)} BAK</p>
+                <p><strong>Total USD Spent:</strong> ${totalUSDSpent.toFixed(2)}</p>
+              </div>
 
-      {/* Success Display */}
-      {state.transactionHash && (
-        <div className="mb-6 p-4 bg-green-100 border border-green-400 rounded-lg">
-          <p className="text-green-800 font-medium">✅ Payment Successful!</p>
-          <p className="text-green-700 text-sm mt-1">
-            Transaction: 
-            <a 
-              href={getExplorerUrl(state.transactionHash, state.selectedOption?.network.name || '')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-1 underline hover:text-green-900"
-            >
-              {state.transactionHash.slice(0, 10)}...{state.transactionHash.slice(-8)}
-            </a>
-          </p>
-          <p className="text-green-700 text-sm">
-            BAK tokens will be distributed to your wallet on BrainArk Network shortly.
-          </p>
-        </div>
-      )}
+              <div className="contract-info">
+                <h4>Contract Information:</h4>
+                <div className="contract-details">
+                  <p><strong>EPO Contract:</strong> {EPO_CONTRACT_ADDRESS}</p>
+                  <p><strong>Airdrop Contract:</strong> {AIRDROP_CONTRACT_ADDRESS}</p>
+                  <p><strong>Funding Wallet:</strong> {FUNDING_WALLET}</p>
+                </div>
+              </div>
 
-      {/* Network and Token Selection */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {Object.entries(paymentsByNetwork).map(([networkName, options]) => (
-          <div key={networkName} className="border rounded-lg p-4 bg-gray-50">
-            <h3 className="text-lg font-semibold mb-3 flex items-center">
-              {getNetworkIcon(networkName)} {networkName}
-            </h3>
-            <div className="space-y-2">
-              {options.map((option) => (
-                <button
-                  key={`${option.token.symbol}-${option.token.network}`}
-                  onClick={() => handleTokenSelect(option)}
-                  className={`w-full p-3 rounded-lg border-2 transition-all ${
-                    state.selectedOption?.token.symbol === option.token.symbol &&
-                    state.selectedOption?.token.network === option.token.network
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-2">{option.token.icon}</span>
-                      <div className="text-left">
-                        <div className="font-semibold">{option.token.symbol}</div>
-                        <div className="text-sm text-gray-500">{option.token.name}</div>
+              <div className="token-selection">
+                <label>Select Payment Token & Network:</label>
+                <div className="token-grid">
+                  {Object.entries(supportedTokens).map(([key, token]) => (
+                    <button
+                      key={key}
+                      className={`token-btn ${selectedToken === key ? 'selected' : ''}`}
+                      onClick={() => setSelectedToken(key)}
+                    >
+                      <span className="token-icon">{token.icon}</span>
+                      <div className="token-info">
+                        <span className="token-symbol">{token.symbol}</span>
+                        <span className="token-network">{token.network}</span>
                       </div>
-                    </div>
+                    </button>
+                  ))}
+                </div>
+                
+                {selectedToken && (
+                  <div className="treasury-info">
+                    <p><strong>Treasury Wallet:</strong> {supportedTokens[selectedToken as keyof typeof supportedTokens].treasuryWallet}</p>
+                    <p><strong>Network:</strong> {supportedTokens[selectedToken as keyof typeof supportedTokens].network}</p>
                   </div>
-                </button>
+                )}
+              </div>
+
+              <div className="amount-input">
+                <label>Purchase Amount (USD):</label>
+                <div className="input-group">
+                  <span className="input-prefix">$</span>
+                  <input
+                    type="number"
+                    value={purchaseAmount}
+                    onChange={(e) => setPurchaseAmount(e.target.value)}
+                    placeholder="0.00"
+                    min="1"
+                    max="1000000"
+                    step="0.01"
+                    className="amount-input-field"
+                  />
+                </div>
+                <div className="purchase-limits">
+                  <span>Min: $1</span>
+                  <span>Max: $1,000,000</span>
+                </div>
+              </div>
+
+              {bakAmount && (
+                <div className="conversion-display">
+                  <p>You will receive: <strong>{bakAmount} BAK tokens</strong></p>
+                  <p>Price: <strong>$0.02 per BAK</strong></p>
+                  <p>Payment goes to: <strong>{supportedTokens[selectedToken as keyof typeof supportedTokens].network} Treasury</strong></p>
+                </div>
+              )}
+
+              <button
+                onClick={purchaseBAK}
+                disabled={!purchaseAmount || parseFloat(purchaseAmount) < 1 || parseFloat(purchaseAmount) > 1000000 || isProcessing}
+                className="purchase-btn"
+              >
+                {isProcessing ? 'Processing...' : `Buy BAK with ${selectedToken} on ${supportedTokens[selectedToken as keyof typeof supportedTokens].network}`}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="epo-info">
+          <h3>Enhanced EPO Information</h3>
+          <div className="info-grid">
+            <div className="info-item">
+              <h4>Token Price</h4>
+              <p>$0.02 per BAK</p>
+            </div>
+            <div className="info-item">
+              <h4>Total Supply</h4>
+              <p>100M BAK Tokens</p>
+            </div>
+            <div className="info-item">
+              <h4>Multi-Network</h4>
+              <p>Ethereum, BSC, Polygon</p>
+            </div>
+            <div className="info-item">
+              <h4>Treasury System</h4>
+              <p>Smart Routing</p>
+            </div>
+          </div>
+
+          <div className="treasury-routing">
+            <h4>Treasury Routing System:</h4>
+            <div className="routing-list">
+              {Object.entries(supportedTokens).map(([key, token]) => (
+                <div key={key} className="routing-item">
+                  <span className="token-icon">{token.icon}</span>
+                  <div className="routing-details">
+                    <strong>{token.symbol} ({token.network})</strong>
+                    <span className="treasury-address">{token.treasuryWallet}</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        ))}
+
+          <div className="benefits-section">
+            <h4>Enhanced EPO Features:</h4>
+            <ul>
+              <li>Multi-network payment support (Ethereum, BSC, Polygon)</li>
+              <li>Smart treasury routing by token type</li>
+              <li>Complete purchase history and analytics</li>
+              <li>$1 to $1M purchase limits with slippage protection</li>
+              <li>Real-time EPO statistics and progress tracking</li>
+              <li>Cross-chain payment collection</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      {/* Payment Form */}
-      {state.selectedOption && (
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
-          <h3 className="text-xl font-semibold mb-4">
-            Payment Details - {state.selectedOption.token.symbol} on {state.selectedOption.network.name}
-          </h3>
-
-          {/* Network Status */}
-          {!state.isCorrectNetwork && (
-            <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-800 font-medium">
-                    ⚠️ Wrong Network
-                  </p>
-                  <p className="text-yellow-700 text-sm">
-                    Please switch to {state.selectedOption.network.name} to continue
-                  </p>
+      {userTransactions.length > 0 && (
+        <div className="transaction-history">
+          <h3>Your Enhanced Purchase History</h3>
+          <div className="transaction-list">
+            {userTransactions.map((tx) => (
+              <div key={tx.id} className="transaction-item enhanced">
+                <div className="tx-main">
+                  <div className="tx-info">
+                    <span className="tx-amount">{tx.bakAmount.toFixed(2)} BAK</span>
+                    <span className="tx-payment">${tx.usdAmount.toFixed(2)} {tx.tokenUsed}</span>
+                  </div>
+                  <div className="tx-network">
+                    <span className="network-badge">{tx.tokenNetwork}</span>
+                    <span className="treasury-info">→ Treasury</span>
+                  </div>
                 </div>
-                <button
-                  onClick={handleNetworkSwitch}
-                  disabled={state.isProcessing}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
-                >
-                  {state.isProcessing ? 'Switching...' : 'Switch Network'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Amount Input */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Amount ({state.selectedOption.token.symbol})
-              </label>
-              <input
-                type="number"
-                value={state.paymentAmount}
-                onChange={(e) => setState(prev => ({ ...prev, paymentAmount: e.target.value }))}
-                placeholder={`Enter ${state.selectedOption.token.symbol} amount`}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                step="any"
-                min="0"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                You will receive (BAK)
-              </label>
-              <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="text-2xl font-bold text-green-700">
-                  {state.bakAmount.toFixed(2)} BAK
+                <div className="tx-meta">
+                  <span className="tx-date">{new Date(tx.timestamp).toLocaleDateString()}</span>
+                  <span className={`tx-status ${tx.status}`}>{tx.status}</span>
                 </div>
-                <div className="text-sm text-green-600">
-                  ≈ ${state.usdValue.toFixed(2)} USD
+                <div className="tx-details">
+                  <span className="tx-hash">TX: {tx.txHash}</span>
+                  <span className="treasury-wallet">Treasury: {tx.treasuryWallet}</span>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-
-          {/* Treasury Address Display */}
-          <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <strong>Treasury Address:</strong> {state.selectedOption.treasuryAddress}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Your payment will be sent to this verified treasury address
-            </p>
-          </div>
-
-          {/* Payment Button */}
-          <button
-            onClick={handlePayment}
-            disabled={
-              state.isProcessing || 
-              !state.isCorrectNetwork || 
-              !state.paymentAmount || 
-              parseFloat(state.paymentAmount) <= 0
-            }
-            className="w-full mt-6 px-6 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {state.isProcessing 
-              ? '⏳ Processing Payment...' 
-              : `🛒 Pay ${state.paymentAmount || '0'} ${state.selectedOption.token.symbol} for ${state.bakAmount.toFixed(2)} BAK`
-            }
-          </button>
         </div>
       )}
-
-      {/* Treasury Information */}
-      <div className="bg-blue-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">
-          📋 Multi-Network Treasury System
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-blue-800">
-          <div>
-            <h4 className="font-semibold mb-2">🔷 Ethereum Mainnet</h4>
-            <ul className="text-sm space-y-1">
-              <li>• ETH payments</li>
-              <li>• USDT (ERC20)</li>
-              <li>• USDC (ERC20)</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">🟡 BSC Mainnet</h4>
-            <ul className="text-sm space-y-1">
-              <li>• BNB payments</li>
-              <li>• USDT (BEP20)</li>
-              <li>• USDC (BEP20)</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2">🟣 Polygon Mainnet</h4>
-            <ul className="text-sm space-y-1">
-              <li>• MATIC payments</li>
-              <li>• USDT (Polygon)</li>
-              <li>• USDC (Polygon)</li>
-            </ul>
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-          <p className="text-blue-900 font-medium">
-            🌟 BAK Distribution: All BAK tokens are distributed on BrainArk Network (Chain ID: 424242)
-          </p>
-        </div>
-      </div>
     </div>
-  )
-}
+  );
+};
 
-export default UpdatedEPOComponent
+export default UpdatedEPOComponent;

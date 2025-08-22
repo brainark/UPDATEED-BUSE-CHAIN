@@ -88,7 +88,7 @@ export class AppwriteService {
         ID.unique(),
         userData
       )
-      return response as User
+      return response as unknown as unknown as User
     } catch (error) {
       console.error('Error creating user:', error)
       throw error
@@ -102,7 +102,7 @@ export class AppwriteService {
         COLLECTIONS.USERS,
         [Query.equal('walletAddress', walletAddress)]
       )
-      return response.documents.length > 0 ? response.documents[0] as User : null
+      return response.documents.length > 0 ? response.documents[0] as unknown as unknown as User : null
     } catch (error) {
       console.error('Error getting user by wallet:', error)
       return null
@@ -117,7 +117,7 @@ export class AppwriteService {
         userId,
         userData
       )
-      return response as User
+      return response as unknown as unknown as User
     } catch (error) {
       console.error('Error updating user:', error)
       throw error
@@ -133,7 +133,7 @@ export class AppwriteService {
         ID.unique(),
         registrationData
       )
-      return response as AirdropRegistration
+      return response as unknown as AirdropRegistration
     } catch (error) {
       console.error('Error creating airdrop registration:', error)
       throw error
@@ -147,7 +147,7 @@ export class AppwriteService {
         COLLECTIONS.AIRDROP_REGISTRATIONS,
         [Query.equal('walletAddress', walletAddress)]
       )
-      return response.documents.length > 0 ? response.documents[0] as AirdropRegistration : null
+      return response.documents.length > 0 ? response.documents[0] as unknown as AirdropRegistration : null
     } catch (error) {
       console.error('Error getting airdrop registration:', error)
       return null
@@ -187,7 +187,7 @@ export class AppwriteService {
         ID.unique(),
         taskData
       )
-      return response as SocialTask
+      return response as unknown as SocialTask
     } catch (error) {
       console.error('Error creating social task:', error)
       throw error
@@ -201,7 +201,7 @@ export class AppwriteService {
         COLLECTIONS.SOCIAL_TASKS,
         [Query.equal('userId', userId)]
       )
-      return response.documents as SocialTask[]
+      return response.documents as unknown as unknown as SocialTask[]
     } catch (error) {
       console.error('Error getting user social tasks:', error)
       return []
@@ -216,7 +216,7 @@ export class AppwriteService {
         taskId,
         taskData
       )
-      return response as SocialTask
+      return response as unknown as SocialTask
     } catch (error) {
       console.error('Error updating social task:', error)
       throw error
@@ -232,7 +232,7 @@ export class AppwriteService {
         ID.unique(),
         referralData
       )
-      return response as Referral
+      return response as unknown as Referral
     } catch (error) {
       console.error('Error creating referral:', error)
       throw error
@@ -246,7 +246,7 @@ export class AppwriteService {
         COLLECTIONS.REFERRALS,
         [Query.equal('referrerId', userId)]
       )
-      return response.documents as Referral[]
+      return response.documents as unknown as Referral[]
     } catch (error) {
       console.error('Error getting user referrals:', error)
       return []
@@ -260,7 +260,7 @@ export class AppwriteService {
         COLLECTIONS.USERS,
         [Query.equal('referralCode', referralCode)]
       )
-      return response.documents.length > 0 ? response.documents[0] as User : null
+      return response.documents.length > 0 ? response.documents[0] as unknown as User : null
     } catch (error) {
       console.error('Error getting referral by code:', error)
       return null
@@ -276,7 +276,7 @@ export class AppwriteService {
         ID.unique(),
         batchData
       )
-      return response as DistributionBatch
+      return response as unknown as DistributionBatch
     } catch (error) {
       console.error('Error creating distribution batch:', error)
       throw error
@@ -294,7 +294,7 @@ export class AppwriteService {
           Query.limit(1)
         ]
       )
-      return response.documents.length > 0 ? response.documents[0] as DistributionBatch : null
+      return response.documents.length > 0 ? response.documents[0] as unknown as DistributionBatch : null
     } catch (error) {
       console.error('Error getting current batch:', error)
       return null

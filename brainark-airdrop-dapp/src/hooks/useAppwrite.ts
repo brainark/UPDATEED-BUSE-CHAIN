@@ -145,7 +145,7 @@ export function useAppwrite(walletAddress?: string): UseAppwriteReturn {
       // Check if already registered
       const existingRegistration = await AppwriteService.getAirdropRegistration(walletAddress)
       if (existingRegistration) {
-        toast.info('Already registered for airdrop')
+        toast('Already registered for airdrop')
         return true
       }
 

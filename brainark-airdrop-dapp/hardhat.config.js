@@ -1,9 +1,12 @@
+require('dotenv').config();
 require("@nomicfoundation/hardhat-toolbox");
-require("@nomicfoundation/hardhat-ethers");
-require("@nomicfoundation/hardhat-chai-matchers");
 
 /** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
+const config = {
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6", // Keep this as v6 since you have ethers v6
+  },
   solidity: {
     compilers: [
       {
@@ -38,7 +41,7 @@ module.exports = {
       url: "http://localhost:8545",
       chainId: 424242,
       accounts: [
-        "0x3bf095cfc3a1382c261b6b16e90df2aec2aa69a12a57f78b0b5cf9fab4973b65",
+        process.env.PRIVATE_KEY,
       ],
       gas: 8000000,
       gasPrice: 1000,
@@ -48,7 +51,27 @@ module.exports = {
       url: "http://localhost:8545",
       chainId: 424242,
       accounts: [
-        "0x3bf095cfc3a1382c261b6b16e90df2aec2aa69a12a57f78b0b5cf9fab4973b65",
+        process.env.PRIVATE_KEY,
+      ],
+      gas: 8000000,
+      gasPrice: 1000,
+      timeout: 60000,
+    },
+    besu: {
+      url: "http://localhost:8545",
+      chainId: 424242,
+      accounts: [
+        process.env.PRIVATE_KEY,
+      ],
+      gas: 8000000,
+      gasPrice: 1000,
+      timeout: 60000,
+    },
+    production: {
+      url: "https://rpc.brainark.online",
+      chainId: 424242,
+      accounts: [
+        process.env.PRODUCTION_PRIVATE_KEY || process.env.PRIVATE_KEY,
       ],
       gas: 8000000,
       gasPrice: 1000,
@@ -62,3 +85,5 @@ module.exports = {
     artifacts: "./artifacts",
   },
 };
+
+module.exports = config;

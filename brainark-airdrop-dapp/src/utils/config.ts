@@ -1,14 +1,13 @@
-import { Chain } from 'wagmi'
+import { Chain } from 'viem'
 
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production'
-const isLocal = process.env.NODE_ENV === 'development' || typeof window !== 'undefined' && window.location.hostname === 'localhost'
+const isLocal = process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost')
 
 // BrainArk Besu Chain Configuration - Local Development
 export const brainarkChainLocal: Chain = {
   id: 424242,
   name: 'BrainArk Besu Network (Local)',
-  network: 'brainark-local',
   nativeCurrency: {
     decimals: 18,
     name: 'BrainArk',
@@ -28,7 +27,6 @@ export const brainarkChainLocal: Chain = {
 export const brainarkChainProduction: Chain = {
   id: 424242,
   name: 'BrainArk Besu Network',
-  network: 'brainark',
   nativeCurrency: {
     decimals: 18,
     name: 'BrainArk',
@@ -39,7 +37,7 @@ export const brainarkChainProduction: Chain = {
     default: { http: ['https://rpc.brainark.online'] },
   },
   blockExplorers: {
-    default: { name: 'BrainArk Besu Explorer', url: 'https://explorer.brainark.online' },
+    default: { name: 'BrainArk Explorer', url: 'https://explorer.brainark.online' },
   },
   testnet: false,
 }
@@ -59,8 +57,8 @@ const LOCAL_CONTRACT_ADDRESSES = {
 
 // Contract Addresses - Production
 const PRODUCTION_CONTRACT_ADDRESSES = {
-  AIRDROP: '0x0000000000000000000000000000000000000000', // To be deployed
-  EPO: '0x0000000000000000000000000000000000000000', // To be deployed
+  AIRDROP: '0x1Df35D8e45E0192cD3C25B007a5417b2235642E5', // Deployed BrainArkAirdrop
+  EPO: '0xdE04886D4e89f48F73c1684f2e610b25D561DD48', // Deployed BrainArkEPOEnhanced
   // Payment tokens for EPO
   USDT: '0x0000000000000000000000000000000000000000', // To be configured
   USDC: '0x0000000000000000000000000000000000000000', // To be configured
@@ -85,10 +83,11 @@ export const AIRDROP_CONFIG = {
   DISTRIBUTION_DELAY: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
 } as const
 
-// EPO Configuration - Enhanced with 30-day limit and 100M supply
+// EPO Configuration - Enhanced with bonding curve and 100M supply
 export const EPO_CONFIG = {
-  PRICE_PER_COIN: 0.02, // $0.02 per BAK
-  TOTAL_SUPPLY: 100_000_000, // 100M coins (increased from 5M)
+  PRICE_START: 0.02, // Starting price $0.02 per BAK
+  PRICE_END: 0.04,   // Ending price $0.04 per BAK
+  TOTAL_SUPPLY: 100_000_000, // 100M coins
   DURATION_DAYS: 30, // 30-day time limit
   ACCEPTED_TOKENS: ['ETH', 'USDT', 'USDC', 'BNB'],
   START_DATE: new Date('2024-01-01T00:00:00Z'), // EPO start date

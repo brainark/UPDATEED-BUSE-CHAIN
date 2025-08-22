@@ -32,7 +32,7 @@ const EnhancedEPOSection: React.FC = () => {
   const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(false)
 
   // Enhanced EPO Configuration
-  const BAK_PRICE = EPO_CONFIG.PRICE_PER_COIN
+  const BAK_PRICE = EPO_CONFIG.PRICE_START // Use starting price for display
   const TOTAL_EPO_SUPPLY = EPO_CONFIG.TOTAL_SUPPLY
   const EPO_DURATION_DAYS = EPO_CONFIG.DURATION_DAYS
   const EPO_START_DATE = EPO_CONFIG.START_DATE

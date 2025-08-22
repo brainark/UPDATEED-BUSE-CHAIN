@@ -27,27 +27,24 @@ export const AIRDROP_ABI = [
   'function unpause()'
 ]
 
-// ABI for EPO Contract
+// ABI for Enhanced EPO Contract with Bonding Curve and Cross-Chain Support
 export const EPO_ABI = [
   // Events
-  'event TokenPurchase(address indexed buyer, address indexed paymentToken, uint256 paymentAmount, uint256 bakAmount, uint256 usdValue, uint256 timestamp)',
-  'event PaymentTokenUpdated(address indexed token, bool enabled, uint256 priceUSD, uint256 timestamp)',
-  'event FundsWithdrawn(address indexed token, uint256 amount, address indexed to, uint256 timestamp)',
+  'event CrossChainPurchase(address indexed buyer, string indexed sourceNetwork, string paymentToken, uint256 paymentAmount, uint256 bakAmount, uint256 currentPrice, uint256 timestamp)',
+  'event BondingCurveUpdate(uint256 totalSold, uint256 newPrice, uint256 timestamp)',
+  'event PaymentWalletUpdated(string indexed paymentType, address oldWallet, address newWallet, uint256 timestamp)',
   
-  // Read functions
-  'function paymentTokens(address) view returns (bool enabled, uint8 decimals, uint256 priceUSD, uint256 minPurchaseUSD, uint256 maxPurchaseUSD, string symbol)',
-  'function getEPOStats() view returns (tuple(uint256 totalBakSold, uint256 totalUSDRaised, uint256 totalPurchases, uint256 remainingSupply, uint256 bakPriceUSD, bool isActive))',
-  'function calculatePurchase(address paymentToken, uint256 paymentAmount) view returns (uint256 usdValue, uint256 bakAmount)',
-  'function getQuote(address paymentToken, uint256 paymentAmount) view returns (uint256 bakAmount, uint256 usdValue, uint256 effectivePrice)',
-  'function getUserPurchaseHistory(address user) view returns (tuple(address buyer, address paymentToken, uint256 paymentAmount, uint256 bakAmount, uint256 usdValue, uint256 timestamp)[])',
-  'function getSupportedTokens() view returns (address[])',
-  'function BAK_PRICE_USD() view returns (uint256)',
-  'function TOTAL_BAK_SUPPLY() view returns (uint256)',
-  'function treasuryWallet() view returns (address)',
-  'function fundingWallet() view returns (address)',
+  // Read functions - Enhanced with bonding curve
+  'function getCurrentPrice() view returns (uint256)',
+  'function calculatePurchase(uint256 paymentAmountUSD) view returns (uint256 bakAmount, uint256 finalPrice)',
+  'function totalBakSold() view returns (uint256)',
+  'function totalUSDRaised() view returns (uint256)',
+  'function paymentWallets(string) view returns (address)',
+  'function paused() view returns (bool)',
+  'function getStats() view returns (tuple(uint256 totalSold, uint256 totalRaised, uint256 currentPrice, uint256 remainingSupply, bool isPaused))',
   
-  // Write functions
-  'function purchaseBAK(address paymentToken, uint256 paymentAmount, uint256 minBakAmount)',
+  // Write functions - Cross-chain purchase
+  'function purchaseBAK(uint256 paymentAmountUSD, uint256 minBakAmount) payable',
   
   // Admin functions
   'function updatePaymentToken(address token, bool enabled, uint8 decimals, uint256 priceUSD, uint256 minPurchaseUSD, uint256 maxPurchaseUSD, string symbol)',

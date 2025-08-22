@@ -1,0 +1,273 @@
+console.log("Deployer Balance:", ethers.formatEther(balance), "BAK");
+const balance = await ethers.provider.getBalance(deployer.address);
+console.log("Deployer Address:", deployer.address);
+const [deployer] = await ethers.getSigners();
+// Check deployer balance
+}
+  console.log("Could not read funding wallet:", error.message);
+} catch (error) {
+  console.log("Funding Wallet:", fundingWallet);
+  const fundingWallet = await epoContract.fundingWallet();
+try {
+console.log("Contract Address:", epoAddress);
+console.log("🔍 Checking EPO Contract Details:");
+// Check the funding wallet
+const epoContract = BrainArkEPO.attach(epoAddress);
+const BrainArkEPO = await ethers.getContractFactory("BrainArkEPO");
+// Get the EPO contract instance
+const airdropAddress = "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36";
+const epoAddress = "0xFf6bC094fcb89B818cc606E062872B34d7430F5D";
+const networkInfo = await ethers.provider.getNetwork()
+console.log("Production deployer balance:", ethers.formatEther(balance), "BAK")
+const balance = await ethers.provider.getBalance(deployer.address)
+console.log("Production deployer address:", deployer.address)
+const [deployer] = await ethers.getSigners()
+// Check production network details
+console.log("Network:", networkInfo.name, "Chain ID:", networkInfo.chainId)
+const networkInfo = await ethers.provider.getNetwork()
+console.log("Production deployer balance:", ethers.formatEther(balance), "BAK")
+const balance = await ethers.provider.getBalance(deployer.address)
+console.log("Production deployer address:", deployer.address)
+const [deployer] = await ethers.getSigners()
+// Check production network details
+console.log("Airdrop contract balance:", ethers.formatEther(finalAirdropBalance), "BAK");
+console.log("EPO contract balance:", ethers.formatEther(finalEpoBalance), "BAK");
+const finalAirdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const finalEpoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check final balances
+console.log("Airdrop transaction confirmed!");
+const genesisAirdropReceipt = await genesisAirdropTx.wait();
+console.log("Sent to Airdrop, tx hash:", genesisAirdropTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36", 
+const genesisAirdropTx = await genesisWallet.sendTransaction({
+// Send to Airdrop contract
+console.log("EPO transaction confirmed!");
+const genesisEpoReceipt = await genesisEpoTx.wait();
+console.log("Sent to EPO, tx hash:", genesisEpoTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0xFf6bC094fcb89B818cc606E062872B34d7430F5D",
+const genesisEpoTx = await genesisWallet.sendTransaction({
+// Now send transactions using the wallet
+console.log("Genesis wallet balance:", ethers.formatEther(await genesisWallet.provider.getBalance(genesisWallet.address)), "BAK");
+console.log("Genesis wallet address:", genesisWallet.address);
+const genesisWallet = new ethers.Wallet(genesisPrivateKey, ethers.provider);
+const genesisPrivateKey = "0x3bf095cfc3a1382c261b6b16e90df2aec2aa69a12a57f78b0b5cf9fab4973b65"; // Get this from your Besu genesis config
+// Import the genesis account with private key (replace with actual private key)
+console.log("Airdrop contract balance:", ethers.formatEther(updatedAirdropBalance), "BAK");
+console.log("EPO contract balance:", ethers.formatEther(updatedEpoBalance), "BAK");
+const updatedAirdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const updatedEpoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check balances after successful transactions
+console.log("Airdrop transaction confirmed in block:", genesisAirdropReceipt.blockNumber);
+const genesisAirdropReceipt = await genesisAirdropTx.wait();
+console.log("Sent to Airdrop, tx hash:", genesisAirdropTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36", 
+const genesisAirdropTx = await genesisAccount.sendTransaction({
+// Send 100 BAK to Airdrop contract from genesis account
+console.log("EPO transaction confirmed in block:", genesisEpoReceipt.blockNumber);
+const genesisEpoReceipt = await genesisEpoTx.wait();
+console.log("Sent to EPO, tx hash:", genesisEpoTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0xFf6bC094fcb89B818cc606E062872B34d7430F5D",
+const genesisEpoTx = await genesisAccount.sendTransaction({
+// Send 100 BAK to EPO contract from genesis account
+console.log("Airdrop contract balance:", ethers.formatEther(finalAirdropBalance), "BAK");
+console.log("EPO contract balance:", ethers.formatEther(finalEpoBalance), "BAK");
+const finalAirdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const finalEpoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check balances
+console.log("Airdrop transaction confirmed in block:", airdropReceipt.blockNumber);
+const airdropReceipt = await airdropTx.wait();
+console.log("Sent to Airdrop, tx hash:", airdropTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36", 
+const airdropTx = await genesisAccount.sendTransaction({
+// Send 100 BAK to Airdrop contract from genesis account
+console.log("EPO transaction confirmed in block:", epoReceipt.blockNumber);
+const epoReceipt = await epoTx.wait();
+console.log("Sent to EPO, tx hash:", epoTx.hash);
+});
+    value: ethers.parseEther("100")
+    to: "0xFf6bC094fcb89B818cc606E062872B34d7430F5D",
+const epoTx = await genesisAccount.sendTransaction({
+// Send 100 BAK to EPO contract from genesis account
+console.log("Genesis account address:", genesisAccount.address);
+const genesisAccount = await ethers.getSigner("0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169");
+// Try to get the genesis account as a signer
+}
+    console.log(`Signer ${i}: ${signers[i].address} - Balance: ${ethers.formatEther(balance)} BAK`);
+    const balance = await ethers.provider.getBalance(signers[i].address);
+for (let i = 0; i < signers.length; i++) {
+console.log("All available signers:");
+const signers = await ethers.getSigners();
+// Check all available signers
+console.log("Genesis account balance:", ethers.formatEther(genesisBalance), "BAK");
+const genesisBalance = await ethers.provider.getBalance("0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169");
+// Check the genesis account balance (the one with all the BAK)
+console.log("Current deployer address:", deployer.address);
+console.log("Current deployer balance:", ethers.formatEther(deployerBalance), "BAK");
+const deployerBalance = await ethers.provider.getBalance(deployer.address);
+// Check the current deployer's balance
+console.log("Airdrop contract balance:", ethers.formatEther(newAirdropBalance), "BAK");
+console.log("EPO contract balance:", ethers.formatEther(newEpoBalance), "BAK");
+const newAirdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const newEpoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check balances again
+console.log("Airdrop transaction confirmed in block:", airdropReceipt.blockNumber);
+const airdropReceipt = await airdropTx.wait(); // Wait for confirmation
+console.log("Sent to Airdrop, tx hash:", airdropTx.hash);
+});
+    value: ethers.parseEther("100") // 100 BAK
+    to: "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36", 
+const airdropTx = await deployer.sendTransaction({
+// Send 100 BAK to Airdrop contract
+console.log("EPO transaction confirmed in block:", epoReceipt.blockNumber);
+const epoReceipt = await epoTx.wait(); // Wait for confirmation
+console.log("Sent to EPO, tx hash:", epoTx.hash);
+});
+    value: ethers.parseEther("100") // 100 BAK
+    to: "0xFf6bC094fcb89B818cc606E062872B34d7430F5D",
+const epoTx = await deployer.sendTransaction({
+// Send 100 BAK to EPO contract with new variable names
+console.log("Airdrop contract balance:", ethers.formatEther(airdropBalance), "BAK");
+console.log("EPO contract balance:", ethers.formatEther(epoBalance), "BAK");
+const airdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const epoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check balances again
+await tx2.wait(); // Wait for confirmation
+console.log("Sent to Airdrop, tx hash:", tx2.hash);
+});
+    value: ethers.parseEther("100") // 100 BAK instead of 1 million
+    to: "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36", 
+const tx2 = await deployer.sendTransaction({
+// Send 100 BAK to Airdrop contract
+await tx1.wait(); // Wait for confirmation
+console.log("Sent to EPO, tx hash:", tx1.hash);
+});
+    value: ethers.parseEther("100") // 100 BAK instead of 1 million
+    to: "0xFf6bC094fcb89B818cc606E062872B34d7430F5D",
+const tx1 = await deployer.sendTransaction({
+// Send 100 BAK to EPO contract
+console.log("Deployer address:", deployer.address);
+const [deployer] = await ethers.getSigners();
+// Get signers
+// (3 for deployment as shown in your logs + maybe 1 more)
+// If nonce is 4, then only 4 transactions have been sent from this address
+console.log("Sender transaction count (nonce):", nonce);
+const nonce = await provider.getTransactionCount("0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169");
+// Check transaction count (nonce) for sender
+console.log("Latest block:", latestBlock);
+const latestBlock = await provider.getBlockNumber();
+// Get the latest few blocks and see if any transactions involve your address
+const provider = ethers.provider;
+// Check the actual transaction history of your sender account
+console.log("Sender current balance:", ethers.formatEther(senderBalance), "BAK");
+const senderBalance = await ethers.provider.getBalance("0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169");
+// Check sender balance to make sure we have the right account
+console.log("Airdrop contract has code:", airdropCode !== "0x");
+console.log("EPO contract has code:", epoCode !== "0x");
+const airdropCode = await ethers.provider.getCode("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const epoCode = await ethers.provider.getCode("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check if the contracts have any code (to see if they're actually deployed)
+console.log("Transaction Receipt 2:", txReceipt2);
+console.log("Transaction Receipt 1:", txReceipt1);
+const txReceipt2 = await ethers.provider.getTransactionReceipt(txHash2);
+const txReceipt1 = await ethers.provider.getTransactionReceipt(txHash1);
+// Get receipts
+console.log("Transaction 2:", transaction2);
+console.log("Transaction 1:", transaction1);
+const transaction2 = await ethers.provider.getTransaction(txHash2);
+const transaction1 = await ethers.provider.getTransaction(txHash1);
+// Get transactions
+const txHash2 = "0x8512424f3165537501f28531e0a205071652a11810e2f33e31fd02ff2805c469";
+const txHash1 = "0x29a2dc2cf84580c262099bcef66407ff7711c7bd12b471106a0ff83853e6e02d";
+// Clear previous declarations and get fresh data
+console.log("Receipt 2:", receipt2);
+console.log("Receipt 1:", receipt1);
+const receipt2 = await ethers.provider.getTransactionReceipt("0x8512424f3165537501f28531e0a205071652a11810e2f33e31fd02ff2805c469");
+const receipt1 = await ethers.provider.getTransactionReceipt("0x29a2dc2cf84580c262099bcef66407ff7711c7bd12b471106a0ff83853e6e02d");
+// Check receipts
+console.log("Transaction 2:", tx2);
+console.log("Transaction 1:", tx1);
+const tx2 = await ethers.provider.getTransaction("0x8512424f3165537501f28531e0a205071652a11810e2f33e31fd02ff2805c469");
+const tx1 = await ethers.provider.getTransaction("0x29a2dc2cf84580c262099bcef66407ff7711c7bd12b471106a0ff83853e6e02d");
+// Use your real transaction hashes
+// Check if this matches your Brainark chain ID
+console.log("Connected to network:", network);
+const network = await ethers.provider.getNetwork();
+console.log("TX2 block:", tx2?.blockNumber);
+console.log("TX1 block:", tx1?.blockNumber);
+// If you have the transaction hashes, check their block numbers
+console.log("Current block:", currentBlock);
+const currentBlock = await ethers.provider.getBlockNumber();
+console.log("Receipt 2 status:", receipt2?.status); // Should be 1 for success
+console.log("Receipt 1 status:", receipt1?.status); // Should be 1 for success
+const receipt2 = await ethers.provider.getTransactionReceipt("TRANSACTION_HASH_2");
+const receipt1 = await ethers.provider.getTransactionReceipt("TRANSACTION_HASH_1");
+// Check transaction receipts
+console.log("Transaction 2:", tx2);
+console.log("Transaction 1:", tx1);
+const tx2 = await ethers.provider.getTransaction("TRANSACTION_HASH_2");
+const tx1 = await ethers.provider.getTransaction("TRANSACTION_HASH_1");
+// In your Hardhat console, check the transaction receipts
+console.log("Airdrop contract BAK token balance:", ethers.formatEther(airdropTokenBalance), "BAK");
+console.log("EPO contract BAK token balance:", ethers.formatEther(epoTokenBalance), "BAK");
+const airdropTokenBalance = await bakToken.balanceOf("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const epoTokenBalance = await bakToken.balanceOf("0xFf6bC094fcb89B818cc606E062872B34d7430F5D");
+// Check token balances
+const bakToken = await ethers.getContractAt("IERC20", bakTokenAddress);
+// Get the BAK token contract instance
+const bakTokenAddress = "YOUR_BAK_TOKEN_CONTRACT_ADDRESS";
+// Replace 'BAK_TOKEN_CONTRACT_ADDRESS' with your actual BAK token contract address
+console.log("Connected to network:", network.name, "Chain ID:", network.chainId.toString())
+const network = await ethers.provider.getNetwork()
+// Check network details
+console.log("Airdrop contract balance:", ethers.formatEther(airdropBalance), "BAK")
+console.log("EPO contract balance:", ethers.formatEther(epoBalance), "BAK")
+const airdropBalance = await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36")
+const epoBalance = await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D")
+// Check both contract balances
+cd /home/brainark/brainark_besu_chain/brainark-airdrop-dapp
+npx hardhat console --network brainark
+cd /home/brainark/brainark_besu_chain/brainark-airdrop-dapp
+await bakToken.owner();
+await bakToken.hasRole("MINTER_ROLE", "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36");
+const bakToken = await ethers.getContractAt("contracts/MockERC20.sol:MockERC20", "<BAK_TOKEN_ADDRESS>");
+await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36") // Airdrop contract
+await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D") // EPO contract
+console.log("Available signers:", signers.length)
+const signers = await ethers.getSigners()
+// Check available signers
+cd /home/brainark/brainark_besu_chain/brainark-airdrop-dapp && npx hardhat run scripts/fund-contracts.js --network brainark
+await ethers.provider.getBalance("0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169") // Deployer
+await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36") // Airdrop contract
+await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D") // EPO contract
+console.log("Deployer balance:", ethers.formatEther(deployerBalance), "BAK")
+const deployerBalance = await ethers.provider.getBalance(deployer)
+const deployer = "0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169"
+// Check deployer balance
+await bakToken.balanceOf("0xFf6bC094fcb89B818cc606E062872B34d7430F5D") // EPO contract
+const bakToken = await ethers.getContractAt("contracts/MockERC20.sol:MockERC20", "<0x0Ac00d552Ef4B7e9326Fe5094707419daF4E4169>")
+await bakToken.balanceOf("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36") // Airdrop contract
+await bakToken.balanceOf("0xFf6bC094fcb89B818cc606E062872B34d7430F5D") // EPO contract
+const bakToken = await ethers.getContractAt("MockERC20", "<BAK_TOKEN_ADDRESS>")
+await ethers.provider.getBalance("0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36")
+// Check Airdrop contract balance
+await ethers.provider.getBalance("0xFf6bC094fcb89B818cc606E062872B34d7430F5D")
+// Check EPO contract balance
+await epo.owner()  // Should return your deployer address
+await epo.TOTAL_BAK_SUPPLY()  // Should return: 100000000000000000000000000 (100M tokens)
+await epo.BAK_PRICE_USD()  // Should return: 20000000000000000 (0.02 ETH)
+// Check if contracts are working
+const airdrop = await ethers.getContractAt("BrainArkAirdrop", "0x4b1D921DD73AcC1ef0cE180B48117C8fF2718f36")
+const epo = await ethers.getContractAt("BrainArkEPO", "0xFf6bC094fcb89B818cc606E062872B34d7430F5D")
+// Get contract instance
+deployer.address;
+const [deployer] = await ethers.getSigners();const [deployer] = await ethers.getSigners();

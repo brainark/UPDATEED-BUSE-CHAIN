@@ -6,7 +6,10 @@ async function main() {
   // Get the deployer account
   const [deployer] = await ethers.getSigners();
   console.log('📝 Deploying contracts with account:', deployer.address);
-  console.log('💰 Account balance:', ethers.formatEther(await deployer.getBalance()), 'BAK\n');
+  
+  // FIXED: Use ethers v5 syntax - ethers.utils.formatEther
+  const balance = await deployer.getBalance();
+  console.log('💰 Account balance:', ethers.utils.formatEther(balance), 'BAK\n');
 
   // Configuration - Update these addresses for production
   const walletConfig = {
@@ -33,9 +36,11 @@ async function main() {
       walletConfig.bnbWallet,         // bnbWallet
       walletConfig.defaultWallet      // defaultWallet
     );
-    await epoContract.waitForDeployment();
     
-    console.log('✅ Enhanced EPO Contract deployed to:', await epoContract.getAddress());
+    // FIXED: Use ethers v5 syntax - .deployed() instead of waitForDeployment()
+    await epoContract.deployed();
+    
+    console.log('✅ Enhanced EPO Contract deployed to:', epoContract.address);
     console.log('🏦 Funding wallet:', walletConfig.bakFundingWallet);
     console.log('💰 Multi-wallet treasury system configured');
 
@@ -43,9 +48,11 @@ async function main() {
     console.log('\n📦 Deploying BrainArk Airdrop Contract...');
     const BrainArkAirdrop = await ethers.getContractFactory("BrainArkAirdrop");
     const airdropContract = await BrainArkAirdrop.deploy(walletConfig.bakFundingWallet);
-    await airdropContract.waitForDeployment();
     
-    console.log('✅ Airdrop Contract deployed to:', await airdropContract.getAddress());
+    // FIXED: Use ethers v5 syntax - .deployed() instead of waitForDeployment()
+    await airdropContract.deployed();
+    
+    console.log('✅ Airdrop Contract deployed to:', airdropContract.address);
     console.log('🏦 Airdrop funding wallet:', walletConfig.bakFundingWallet);
 
     // 3. Set up initial configuration
@@ -60,20 +67,21 @@ async function main() {
     console.log('✅ EPO wallet configuration verified');
 
     // 4. Fund contracts for testing (optional)
-    const fundingAmount = ethers.parseEther("1000"); // 1000 BAK for testing
+    // FIXED: Use ethers v5 syntax - ethers.utils.parseEther
+    const fundingAmount = ethers.utils.parseEther("1000"); // 1000 BAK for testing
     
     console.log('\n💰 Funding contracts for testing...');
     
     // Fund EPO contract
     await deployer.sendTransaction({
-      to: await epoContract.getAddress(),
+      to: epoContract.address,
       value: fundingAmount
     });
     console.log('✅ EPO contract funded with 1000 BAK');
     
     // Fund Airdrop contract
     await deployer.sendTransaction({
-      to: await airdropContract.getAddress(),
+      to: airdropContract.address,
       value: fundingAmount
     });
     console.log('✅ Airdrop contract funded with 1000 BAK');
@@ -82,7 +90,7 @@ async function main() {
     console.log('\n📋 DEPLOYMENT SUMMARY');
     console.log('=' .repeat(70));
     console.log('🏢 ENHANCED EPO CONTRACT');
-    console.log('   Address:', await epoContract.getAddress());
+    console.log('   Address:', epoContract.address);
     console.log('   Features: Multi-wallet treasury, Smart routing, Complete analytics');
     console.log('   Funding Wallet:', walletConfig.bakFundingWallet);
     console.log('   ETH Treasury:', walletConfig.ethWallet);
@@ -92,7 +100,7 @@ async function main() {
     console.log('   Default Treasury:', walletConfig.defaultWallet);
     
     console.log('\n🎁 AIRDROP CONTRACT');
-    console.log('   Address:', await airdropContract.getAddress());
+    console.log('   Address:', airdropContract.address);
     console.log('   Features: Social tasks, Referral system, 10M BAK distribution');
     console.log('   Funding Wallet:', walletConfig.bakFundingWallet);
     console.log('   Target Participants: 1,000,000 users');
@@ -100,15 +108,15 @@ async function main() {
     
     console.log('\n🌐 NETWORK INFORMATION');
     console.log('   Network: BrainArk Besu Chain');
-    console.log('   Chain ID: 1337');
+    console.log('   Chain ID: 424242');
     console.log('   Deployer:', deployer.address);
     console.log('   Total Gas Used: ~4,000,000 gas');
     
     console.log('\n📝 ENVIRONMENT VARIABLES');
     console.log('   Add these to your .env.local file:');
     console.log('=' .repeat(70));
-    console.log(`NEXT_PUBLIC_EPO_CONTRACT=${await epoContract.getAddress()}`);
-    console.log(`NEXT_PUBLIC_AIRDROP_CONTRACT=${await airdropContract.getAddress()}`);
+    console.log(`NEXT_PUBLIC_EPO_CONTRACT=${epoContract.address}`);
+    console.log(`NEXT_PUBLIC_AIRDROP_CONTRACT=${airdropContract.address}`);
     console.log(`NEXT_PUBLIC_FUNDING_WALLET=${walletConfig.bakFundingWallet}`);
     console.log(`NEXT_PUBLIC_ETH_TREASURY=${walletConfig.ethWallet}`);
     console.log(`NEXT_PUBLIC_USDT_TREASURY=${walletConfig.usdtWallet}`);
@@ -133,8 +141,8 @@ async function main() {
     
     console.log('\n🔍 CONTRACT VERIFICATION');
     console.log('   Run these commands to verify contracts:');
-    console.log(`   npx hardhat verify --network brainark ${await epoContract.getAddress()} "${walletConfig.bakFundingWallet}" "${walletConfig.ethWallet}" "${walletConfig.usdtWallet}" "${walletConfig.usdcWallet}" "${walletConfig.bnbWallet}" "${walletConfig.defaultWallet}"`);
-    console.log(`   npx hardhat verify --network brainark ${await airdropContract.getAddress()} "${walletConfig.bakFundingWallet}"`);
+    console.log(`   npx hardhat verify --network brainark ${epoContract.address} "${walletConfig.bakFundingWallet}" "${walletConfig.ethWallet}" "${walletConfig.usdtWallet}" "${walletConfig.usdcWallet}" "${walletConfig.bnbWallet}" "${walletConfig.defaultWallet}"`);
+    console.log(`   npx hardhat verify --network brainark ${airdropContract.address} "${walletConfig.bakFundingWallet}"`);
     
     console.log('\n📊 CONTRACT FEATURES SUMMARY');
     console.log('=' .repeat(70));
@@ -164,11 +172,11 @@ async function main() {
 
     return {
       epo: {
-        address: await epoContract.getAddress(),
+        address: epoContract.address,
         contract: epoContract
       },
       airdrop: {
-        address: await airdropContract.getAddress(),
+        address: airdropContract.address,
         contract: airdropContract
       },
       wallets: walletConfig

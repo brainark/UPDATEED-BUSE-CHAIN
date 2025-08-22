@@ -79,7 +79,7 @@ const WhitepaperComponent: React.FC = () => {
                   <strong>Block Time:</strong> ~15 seconds
                 </div>
                 <div className="spec-item">
-                  <strong>Network ID: 424242
+                  <strong>Network ID:</strong> 424242
                 </div>
                 <div className="spec-item">
                   <strong>Virtual Machine:</strong> Ethereum Virtual Machine (EVM)

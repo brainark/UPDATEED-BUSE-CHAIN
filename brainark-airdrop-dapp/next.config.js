@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  transpilePackages: ['@rainbow-me/rainbowkit', 'wagmi', 'viem'],
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   images: {
     domains: ['localhost'],
   },

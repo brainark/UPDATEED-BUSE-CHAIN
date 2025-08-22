@@ -1,0 +1,16 @@
+# SECURITY: Never commit these files
+.env
+.env.local
+.env.production
+*.key
+*secret*
+*private*
+wallet.json
+keystore/
+secrets/
+
+# Backup and temp files
+*.backup
+*.bak
+/tmp/
+/temp/

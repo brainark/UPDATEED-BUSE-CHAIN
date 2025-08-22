@@ -133,7 +133,7 @@ export default function Home() {
           <div className="relative">
             {activeSection === 'hero' && (
               <div className="animate-fade-in">
-                <Hero onNavigateToSection={setActiveSection} />
+                <Hero onNavigateToSection={(section: string) => setActiveSection(section as any)} />
                 <StatsSection />
               </div>
             )}

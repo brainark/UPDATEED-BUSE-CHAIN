@@ -145,13 +145,13 @@ export default function StatsSection() {
               Total Raised
             </p>
             <div className="mt-2 text-sm text-gray-500">
-              Price: ${EPO_CONFIG.PRICE_PER_COIN} per BAK
+              Price: ${EPO_CONFIG.PRICE_START} - ${EPO_CONFIG.PRICE_END} per BAK
             </div>
             <div className="mt-3 bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-purple-500 h-2 rounded-full transition-all duration-500"
                 style={{ 
-                  width: `${Math.min((stats.totalRaised / (EPO_CONFIG.TOTAL_SUPPLY * EPO_CONFIG.PRICE_PER_COIN)) * 100, 100)}%` 
+                  width: `${Math.min((stats.totalRaised / (EPO_CONFIG.TOTAL_SUPPLY * EPO_CONFIG.PRICE_START)) * 100, 100)}%` 
                 }}
               />
             </div>
@@ -202,7 +202,7 @@ export default function StatsSection() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Token price:</span>
                 <span className="font-semibold text-gray-900">
-                  ${EPO_CONFIG.PRICE_PER_COIN}
+                  ${EPO_CONFIG.PRICE_START}
                 </span>
               </div>
               <div className="flex justify-between">

@@ -2,11 +2,10 @@ import '@/styles/globals.css'
 import '@rainbow-me/rainbowkit/styles.css'
 import type { AppProps } from 'next/app'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiConfig } from 'wagmi'
-import { RainbowKitProvider, darkTheme, lightTheme, connectorsForWallets } from '@rainbow-me/rainbowkit'
-import { metaMaskWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets'
+import { WagmiProvider } from 'wagmi'
+import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { Toaster } from 'react-hot-toast'
-import { simpleWagmiConfig, chains } from '@/utils/simpleWagmi'
+import { wagmiConfig } from '@/utils/wagmi'
 import { useState, useEffect } from 'react'
 
 const queryClient = new QueryClient({
@@ -17,17 +16,6 @@ const queryClient = new QueryClient({
     },
   },
 })
-
-// Create simple connectors without WalletConnect
-const connectors = connectorsForWallets([
-  {
-    groupName: 'Popular',
-    wallets: [
-      metaMaskWallet({ projectId: '', chains }),
-      injectedWallet({ chains }),
-    ],
-  },
-])
 
 export default function App({ Component, pageProps }: AppProps) {
   const [mounted, setMounted] = useState(false)
@@ -79,18 +67,9 @@ export default function App({ Component, pageProps }: AppProps) {
   if (!mounted) return null
 
   return (
-    <WagmiConfig config={simpleWagmiConfig}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
-          chains={chains}
-          theme={isDark ? darkTheme() : lightTheme()}
-          appInfo={{
-            appName: 'BrainArk Airdrop DApp',
-            learnMoreUrl: 'https://brainark.online',
-          }}
-          modalSize="compact"
-          showRecentTransactions={true}
-        >
+        <RainbowKitProvider>
           <div className="min-h-screen bg-deep-black">
             <Component {...pageProps} />
             <Toaster
@@ -120,6 +99,6 @@ export default function App({ Component, pageProps }: AppProps) {
           </div>
         </RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   )
 }

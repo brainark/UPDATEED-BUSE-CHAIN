@@ -88,7 +88,8 @@ export default function EPOSection() {
 
   const calculateBakAmount = (amount: number) => {
     const usdValue = amount * selectedToken.price
-    const bakTokens = usdValue / EPO_CONFIG.PRICE_PER_COIN
+    // Use starting price for initial calculation, actual price determined by bonding curve
+    const bakTokens = usdValue / EPO_CONFIG.PRICE_START
     setBakAmount(bakTokens.toFixed(2))
   }
 
@@ -184,7 +185,7 @@ export default function EPOSection() {
             💰 Early Public Offering (EPO)
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Purchase BAK tokens at a fixed price of ${EPO_CONFIG.PRICE_PER_COIN} each. 
+            Purchase BAK tokens with a dynamic bonding curve starting at ${EPO_CONFIG.PRICE_START} and ending at ${EPO_CONFIG.PRICE_END}. 
             Pay with ETH, USDT, USDC, or BNB. No time limits, no KYC required.
           </p>
         </div>
@@ -194,7 +195,7 @@ export default function EPOSection() {
           <div className="card text-center">
             <CurrencyDollarIcon className="h-8 w-8 text-brainark-500 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-brainark-500 mb-1">
-              ${EPO_CONFIG.PRICE_PER_COIN}
+              ${EPO_CONFIG.PRICE_START} - ${EPO_CONFIG.PRICE_END}
             </h3>
             <p className="text-gray-600 dark:text-gray-300">Price per BAK</p>
           </div>
@@ -348,7 +349,7 @@ export default function EPOSection() {
                     <div className="flex justify-between border-t border-gray-300 dark:border-gray-600 pt-2">
                       <span className="text-gray-600 dark:text-gray-300">Price per BAK:</span>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        ${EPO_CONFIG.PRICE_PER_COIN}
+                        ${EPO_CONFIG.PRICE_START} - ${EPO_CONFIG.PRICE_END}
                       </span>
                     </div>
                   </div>
@@ -387,7 +388,7 @@ export default function EPOSection() {
                   <li className="flex items-start">
                     <span className="text-brainark-500 mr-2">•</span>
                     <span className="text-gray-600 dark:text-gray-300">
-                      Fixed price of ${EPO_CONFIG.PRICE_PER_COIN} per BAK token
+                      Bonding curve pricing from ${EPO_CONFIG.PRICE_START} to ${EPO_CONFIG.PRICE_END} per BAK token
                     </span>
                   </li>
                   <li className="flex items-start">

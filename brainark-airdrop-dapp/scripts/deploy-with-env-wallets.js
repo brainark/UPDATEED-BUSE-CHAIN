@@ -1,3 +1,4 @@
+
 const { ethers } = require("hardhat");
 
 async function main() {
@@ -8,17 +9,17 @@ async function main() {
   console.log('📝 Deploying contracts with account:', deployer.address);
   console.log('💰 Account balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'BAK\n');
 
-  // Configuration - Using EXACT addresses from .env.local
+  // Configuration - Using addresses from .env.local
   const walletConfig = {
     // Funding wallet (BAK distribution) - from BAK_BRAINARK_TREASURY
-    bakFundingWallet: "0xC7A3e128f909153442D931BA430AC9aA55E9370D",
+    bakFundingWallet: process.env.BAK_FUNDING_WALLET || "0xC7A3e128f909153442D931BA430AC9aA55E9370D",
     
     // Treasury wallets for different payment tokens
-    ethWallet: "0xC91A5902da7321054cEdAeB49ce9A6a3835Fc417",      // ETH_MAINNET_TREASURY
-    usdtWallet: "0xc9dE877a53f85BF51D76faed0C8c8842EFb35782",     // USDT_ETHEREUM_TREASURY  
-    usdcWallet: "0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145",     // USDC_ETHEREUM_TREASURY
-    bnbWallet: "0x794F67aA174bD0A252BeCA0089490a58Cc695a05",      // BNB_BSC_TREASURY
-    defaultWallet: "0xC7A3e128f909153442D931BA430AC9aA55E9370D"   // BAK_BRAINARK_TREASURY (fallback)
+    ethWallet: process.env.ETH_MAINNET_TREASURY || "0xC91A5902da7321054cEdAeB49ce9A6a3835Fc417",      // ETH_MAINNET_TREASURY
+    usdtWallet: process.env.USDT_ETHEREUM_TREASURY || "0xc9dE877a53f85BF51D76faed0C8c8842EFb35782",     // USDT_ETHEREUM_TREASURY  
+    usdcWallet: process.env.USDC_ETHEREUM_TREASURY || "0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145",     // USDC_ETHEREUM_TREASURY
+    bnbWallet: process.env.BNB_BSC_TREASURY || "0x794F67aA174bD0A252BeCA0089490a58Cc695a05",      // BNB_BSC_TREASURY
+    defaultWallet: process.env.DEFAULT_TREASURY || "0xC7A3e128f909153442D931BA430AC9aA55E9370D"   // BAK_BRAINARK_TREASURY (fallback)
   };
 
   // Multi-network treasury addresses for reference
@@ -79,6 +80,38 @@ async function main() {
     // Verify wallet configuration
     const contractWalletConfig = await epoContract.getWalletConfig();
     console.log('✅ EPO wallet configuration verified');
+
+    // 3.1 Configure payment tokens based on multi-network setup
+    console.log('\n⚙️ Configuring multi-network payment tokens...');
+
+    const tokenConfigurations = [
+      { symbol: 'ETH', addressEnv: 'ETH_TOKEN_ADDRESS', decimals: 18, price: '2000', min: '1', max: '10000', treasury: walletConfig.ethWallet },
+      { symbol: 'USDT', addressEnv: 'USDT_TOKEN_ADDRESS', decimals: 6, price: '1', min: '1', max: '10000', treasury: walletConfig.usdtWallet },
+      { symbol: 'USDC', addressEnv: 'USDC_TOKEN_ADDRESS', decimals: 6, price: '1', min: '1', max: '10000', treasury: walletConfig.usdcWallet },
+      { symbol: 'BNB', addressEnv: 'BNB_TOKEN_ADDRESS', decimals: 18, price: '300', min: '1', max: '10000', treasury: walletConfig.bnbWallet },
+      // Add other tokens as needed, e.g., MATIC, DAI, etc.
+    ];
+
+    for (const token of tokenConfigurations) {
+      const tokenAddress = process.env[token.addressEnv] || ethers.constants.AddressZero;
+      if (tokenAddress !== ethers.constants.AddressZero) {
+        console.log(`   Configuring ${token.symbol}...`);
+        await epoContract.configurePaymentToken(
+          tokenAddress,
+          true, // enabled
+          token.decimals,
+          ethers.parseEther(token.price),
+          ethers.parseUnits(token.min, token.decimals),
+          ethers.parseUnits(token.max, token.decimals),
+          token.symbol,
+          token.treasury
+        );
+        console.log(`   ✅ ${token.symbol} configured.`);
+      } else {
+        console.log(`   ⚠️  ${token.symbol} token address not provided in .env.local (${token.addressEnv}), skipping configuration.`);
+      }
+    }
+    console.log('✅ Multi-network payment token configuration complete.');
 
     // 4. Fund contracts for testing (optional)
     const fundingAmount = ethers.parseEther("1000"); // 1000 BAK for testing
@@ -152,19 +185,30 @@ async function main() {
     console.log(`NEXT_PUBLIC_EPO_CONTRACT=${await epoContract.getAddress()}`);
     console.log(`NEXT_PUBLIC_AIRDROP_CONTRACT=${await airdropContract.getAddress()}`);
     console.log(`NEXT_PUBLIC_FUNDING_WALLET=${walletConfig.bakFundingWallet}`);
+    console.log(`
+   Required .env.local variables for wallets and tokens:`);
+    console.log(`   BAK_FUNDING_WALLET=`);
+    console.log(`   ETH_MAINNET_TREASURY=`);
+    console.log(`   USDT_ETHEREUM_TREASURY=`);
+    console.log(`   USDC_ETHEREUM_TREASURY=`);
+    console.log(`   BNB_BSC_TREASURY=`);
+    console.log(`   DEFAULT_TREASURY=`);
+    console.log(`   ETH_TOKEN_ADDRESS=`);
+    console.log(`   USDT_TOKEN_ADDRESS=`);
+    console.log(`   USDC_TOKEN_ADDRESS=`);
+    console.log(`   BNB_TOKEN_ADDRESS=`);
     
     console.log('\n🔧 NEXT STEPS');
     console.log('=' .repeat(80));
-    console.log('1. 📝 Update .env.local with the contract addresses above');
-    console.log('2. 🪙 Deploy payment tokens on respective networks if needed');
-    console.log('3. ⚙️ Configure payment tokens in EPO contract:');
-    console.log('   - For cross-chain: Use token-specific treasury wallets');
-    console.log('   - For single-chain: Use default routing');
-    console.log('4. 🧪 Test EPO purchases with different payment tokens');
-    console.log('5. 👥 Set up additional social verifiers for airdrop');
-    console.log('6. 🔒 Secure all private keys (already in .env.local)');
-    console.log('7. 📊 Monitor contract balances and treasury wallets');
-    console.log('8. 🌐 Update frontend with new contract addresses');
+    console.log('1. 📝 Update .env.local with the contract addresses and required wallet/token addresses listed above.');
+    console.log('2. ⚙️ Configure payment tokens in EPO contract (if not already done by this script):');
+    console.log('   - For cross-chain: Ensure token addresses are correct in .env.local and treasury wallets are funded.');
+    console.log('   - For single-chain: Verify default routing and token configurations.');
+    console.log('3. 🧪 Test EPO purchases with different payment tokens.');
+    console.log('4. 👥 Set up additional social verifiers for airdrop.');
+    console.log('5. 🔒 Secure all private keys (already in .env.local).');
+    console.log('6. 📊 Monitor contract balances and treasury wallets.');
+    console.log('7. 🌐 Update frontend with new contract addresses.');
     
     console.log('\n🔍 CONTRACT VERIFICATION');
     console.log('   Run these commands to verify contracts:');

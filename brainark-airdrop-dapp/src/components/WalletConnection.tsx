@@ -15,7 +15,7 @@ interface WalletConnectionProps {
 
 // BrainArk Network Configuration
 const BRAINARK_NETWORK = {
-ou  chainId: '0x67932', // 424242 in hex
+  chainId: '0x67932', // 424242 in hex
   chainName: 'BrainArk Besu Network',
   nativeCurrency: {
     name: 'BrainArk',

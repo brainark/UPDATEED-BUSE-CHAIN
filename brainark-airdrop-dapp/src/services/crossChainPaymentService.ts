@@ -33,8 +33,8 @@ export interface NetworkProvider {
 
 class CrossChainPaymentService {
   private providers: Map<string, ethers.JsonRpcProvider> = new Map()
-  private brainarkProvider: ethers.JsonRpcProvider
-  private brainarkSigner: ethers.Wallet
+  private brainarkProvider!: ethers.JsonRpcProvider
+  private brainarkSigner!: ethers.Wallet
   private paymentRecords: Map<string, PaymentRecord> = new Map()
 
   constructor() {
@@ -93,8 +93,8 @@ class CrossChainPaymentService {
           if (typeof tx === 'string') continue
 
           // Check if transaction is to one of our treasury addresses
-          if (treasuryAddresses.includes(tx.to || '')) {
-            await this.processPaymentTransaction(networkKey, tx, blockNumber)
+          if ((tx as any).to && treasuryAddresses.includes((tx as any).to)) {
+            await this.processPaymentTransaction(networkKey, tx as any, blockNumber)
           }
         }
       } catch (error) {

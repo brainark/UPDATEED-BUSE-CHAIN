@@ -89,14 +89,14 @@ export default function IntegratedExplorer() {
               const tx = latestBlock.transactions[i]
               if (typeof tx === 'object' && tx.hash) {
                 transactions.push({
-                  hash: tx.hash,,
-                  from: tx.from,,
-                  to: tx.to || 'Contract Creation',,
-                  value: wallet.web3.utils.fromWei(tx.value, 'ether'),,
-                  gasPrice: wallet.web3.utils.fromWei(tx.gasPrice, 'gwei'),,
-                  gasUsed: tx.gas?.toString() || '0',,
-                  blockNumber: tx.blockNumber || blockNumber,,
-                  timestamp: Number(latestBlock.timestamp),,
+                  hash: tx.hash,
+                  from: tx.from,
+                  to: tx.to || 'Contract Creation',
+                  value: wallet.web3.utils.fromWei(tx.value || '0', 'ether'),
+                  gasPrice: wallet.web3.utils.fromWei(tx.gasPrice || '0', 'gwei'),
+                  gasUsed: tx.gas?.toString() || '0',
+                  blockNumber: Number(tx.blockNumber) || Number(blockNumber),
+                  timestamp: Number(latestBlock.timestamp),
                   status: 'success'
                 })
               }
@@ -107,7 +107,7 @@ export default function IntegratedExplorer() {
         }
 
         setNetworkStats({
-          blockNumber,
+          blockNumber: Number(blockNumber),
           gasPrice: wallet.web3.utils.fromWei(gasPrice, 'gwei'),
           peerCount: Math.floor(Math.random() * 20) + 5, // Mock data
           hashrate: (Math.random() * 100).toFixed(2), // Mock data

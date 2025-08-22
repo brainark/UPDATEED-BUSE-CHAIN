@@ -35,7 +35,7 @@ export const shortenAddress = (address: string, chars: number = 4): string => {
 
 export const isValidAddress = (address: string): boolean => {
   try {
-    return ethers.utils.isAddress(address)
+    return ethers.isAddress(address)
   } catch {
     return false
   }
@@ -74,17 +74,17 @@ export const formatDuration = (seconds: number): string => {
 }
 
 // Token utilities
-export const parseTokenAmount = (amount: string, decimals: number = 18): ethers.BigNumber => {
+export const parseTokenAmount = (amount: string, decimals: number = 18): bigint => {
   try {
-    return ethers.utils.parseUnits(amount, decimals)
+    return ethers.parseUnits(amount, decimals)
   } catch {
-    return ethers.BigNumber.from(0)
+    return BigInt(0)
   }
 }
 
-export const formatTokenAmount = (amount: ethers.BigNumber, decimals: number = 18, displayDecimals: number = 4): string => {
+export const formatTokenAmount = (amount: bigint, decimals: number = 18, displayDecimals: number = 4): string => {
   try {
-    const formatted = ethers.utils.formatUnits(amount, decimals)
+    const formatted = ethers.formatUnits(amount, decimals)
     const num = parseFloat(formatted)
     return num.toFixed(displayDecimals)
   } catch {

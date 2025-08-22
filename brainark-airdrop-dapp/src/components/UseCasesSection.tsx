@@ -467,8 +467,7 @@ export default function UseCasesSection() {
             >
               <div className="flex items-start gap-3 mb-4">
                 <div className="text-2xl">
-                  {selectedCategory === 'all' ? useCase.icon : 
-                   useCaseCategories.find(cat => cat.category === selectedCategory)?.icon}
+                  {useCaseCategories.find(cat => cat.cases.includes(useCase))?.icon || '📋'}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-2">
