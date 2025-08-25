@@ -27,7 +27,7 @@
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
     "viem": "^2.33.3",
-    "wagmi": "^2.16.3"
+    "wagmi": "^2.16.5"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.1.0",
