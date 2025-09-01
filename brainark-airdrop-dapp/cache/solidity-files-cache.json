@@ -610,49 +610,6 @@
         "BrainArkBridge"
       ]
     },
-    "/home/brainark/brainark_besu_chain/brainark-airdrop-dapp/contracts/BrainArkEPOEnhanced.sol": {
-      "lastModificationDate": 1755855297073,
-      "contentHash": "73a838260cc9ffb27cf9a236041a813b",
-      "sourceName": "contracts/BrainArkEPOEnhanced.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
-        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/access/Ownable.sol",
-        "@openzeppelin/contracts/security/Pausable.sol",
-        "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"
-      ],
-      "versionPragmas": [
-        "0.8.20"
-      ],
-      "artifacts": [
-        "BrainArkEPOEnhanced"
-      ]
-    },
     "/home/brainark/brainark_besu_chain/brainark-airdrop-dapp/node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
       "lastModificationDate": 1755174714028,
       "contentHash": "d822a8a9468649cab463f29f5decf5cc",
@@ -840,6 +797,49 @@
       ],
       "artifacts": [
         "BrainArkEPOCrossChain"
+      ]
+    },
+    "/home/brainark/brainark_besu_chain/brainark-airdrop-dapp/contracts/BrainArkEPOComplete.sol": {
+      "lastModificationDate": 1756483951229,
+      "contentHash": "ac12a968595032975c7e8e5716db4edc",
+      "sourceName": "contracts/BrainArkEPOComplete.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+        "@openzeppelin/contracts/security/ReentrancyGuard.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/security/Pausable.sol",
+        "@openzeppelin/contracts/utils/cryptography/ECDSA.sol"
+      ],
+      "versionPragmas": [
+        "0.8.20"
+      ],
+      "artifacts": [
+        "BrainArkEPOComplete"
       ]
     }
   }

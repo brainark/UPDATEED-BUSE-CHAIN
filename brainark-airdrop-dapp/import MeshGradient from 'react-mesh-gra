@@ -1,0 +1,5 @@
+import MeshGradient from 'react-mesh-gradient';
+
+export default function MyBackground() {
+  return <MeshGradient colors={['#3b6df7', '#6f95ff', '#f4f7ff']} />;
+}
