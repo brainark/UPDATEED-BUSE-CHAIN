@@ -38,10 +38,10 @@ const config = {
       chainId: 31337,
     },
     brainark: {
-      url: "http://localhost:8545",
+      url: "https://rpc.brainark.online",
       chainId: 424242,
       accounts: [
-        process.env.PRIVATE_KEY,
+        process.env.ADMIN_PRIVATE_KEY || process.env.PRIVATE_KEY,
       ],
       gas: 8000000,
       gasPrice: 1000,
