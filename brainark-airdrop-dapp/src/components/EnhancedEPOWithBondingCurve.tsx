@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { EPO_CONFIG } from '@/utils/config'
 import AutoWalletConnection from './AutoWalletConnection'
-import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon, LockClosedIcon, LockOpenIcon } from '@heroicons/react/24/outline'
+import { EPOShaderBackground } from './shaders'
+import { liquidityTracker, LIQUIDITY_LOCK_THRESHOLD, checkSellPermission } from '@/utils/liquidityTracker'
+import { useEPOContract } from '@/hooks/useEPOContract'
+import { startTokenPriceUpdates } from '@/utils/multiNetworkConfig'
 
 interface SupportedToken {
   symbol: string
@@ -33,15 +37,151 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false)
   const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(false)
   const [selectedToken, setSelectedToken] = useState<string>('USDT')
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('ethereum')
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState<boolean>(false)
   const [purchaseAmount, setPurchaseAmount] = useState<string>('')
   const [bakAmount, setBakAmount] = useState<string>('')
   const [isProcessing, setIsProcessing] = useState<boolean>(false)
   const [transactions, setTransactions] = useState<any[]>([])
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
-  const [totalSold, setTotalSold] = useState<number>(0)
   const [slippage, setSlippage] = useState<number>(0.5)
   const [priceImpact, setPriceImpact] = useState<number>(0)
   const [quickActionsOpen, setQuickActionsOpen] = useState<boolean>(false)
+  
+  // Cross-Chain Token Data
+  const getTokensForNetwork = (network: string) => {
+    const networkTokens = {
+      ethereum: [
+        { symbol: 'ETH', name: 'Ethereum', icon: '💎', price: 3420.75, change24h: 1.85, native: true },
+        { symbol: 'USDT', name: 'Tether USD', icon: '💵', price: 1.00, change24h: 0.01, native: false },
+        { symbol: 'USDC', name: 'USD Coin', icon: '🔵', price: 1.00, change24h: -0.02, native: false }
+      ],
+      bsc: [
+        { symbol: 'BNB', name: 'Binance Coin', icon: '🟡', price: 635.50, change24h: 2.45, native: true },
+        { symbol: 'USDT', name: 'Tether USD (BSC)', icon: '💵', price: 1.00, change24h: 0.01, native: false },
+        { symbol: 'USDC', name: 'USD Coin (BSC)', icon: '🔵', price: 1.00, change24h: -0.02, native: false }
+      ],
+      polygon: [
+        { symbol: 'MATIC', name: 'Polygon', icon: '🟣', price: 0.85, change24h: 1.25, native: true },
+        { symbol: 'USDT', name: 'Tether USD (Polygon)', icon: '💵', price: 1.00, change24h: 0.01, native: false },
+        { symbol: 'USDC', name: 'USD Coin (Polygon)', icon: '🔵', price: 1.00, change24h: -0.02, native: false }
+      ]
+    }
+    return networkTokens[network as keyof typeof networkTokens] || []
+  }
+
+  // Network switching helper
+  const switchToSelectedNetwork = async (networkKey: string) => {
+    // Prevent multiple concurrent network switch attempts
+    if (isSwitchingNetwork) {
+      toast.error('Network switch already in progress, please wait...')
+      return
+    }
+    
+    const networkChainIds: Record<string, number> = {
+      ethereum: 1,
+      bsc: 56,
+      polygon: 137
+    }
+    
+    const chainId = networkChainIds[networkKey]
+    if (!chainId || typeof window === 'undefined' || !window.ethereum) {
+      toast.error('MetaMask not available or invalid network')
+      return
+    }
+
+    setIsSwitchingNetwork(true)
+    try {
+      const chainIdHex = `0x${chainId.toString(16)}`
+      
+      // Try to switch to the network
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: chainIdHex }],
+      })
+      
+      toast.success(`Successfully switched to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`)
+      setSelectedNetwork(networkKey)
+      
+    } catch (switchError: any) {
+      // If network doesn't exist, add it
+      if (switchError.code === 4902) {
+        try {
+          const networkConfigs: Record<string, any> = {
+            ethereum: {
+              chainId: '0x1',
+              chainName: 'Ethereum Mainnet',
+              nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://ethereum-rpc.publicnode.com'],
+              blockExplorerUrls: ['https://etherscan.io']
+            },
+            bsc: {
+              chainId: '0x38',
+              chainName: 'BSC Mainnet',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-rpc.publicnode.com'],
+              blockExplorerUrls: ['https://bscscan.com']
+            },
+            polygon: {
+              chainId: '0x89',
+              chainName: 'Polygon Mainnet',
+              nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+              rpcUrls: ['https://polygon-bor-rpc.publicnode.com'],
+              blockExplorerUrls: ['https://polygonscan.com']
+            }
+          }
+          
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkConfigs[networkKey]],
+          })
+          
+          toast.success(`Added and switched to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`)
+          setSelectedNetwork(networkKey)
+          
+        } catch (addError) {
+          console.error('Failed to add network:', addError)
+          toast.error('Failed to add network to wallet')
+        }
+      } else {
+        console.error('Failed to switch network:', switchError)
+        toast.error('Failed to switch network')
+      }
+    } finally {
+      setIsSwitchingNetwork(false)
+    }
+  }
+
+  // Get treasury address for selected token/network
+  const getTreasuryAddress = () => {
+    const treasuryMap: Record<string, Record<string, string>> = {
+      ethereum: {
+        ETH: process.env.NEXT_PUBLIC_ETH_MAINNET_TREASURY || '0xC91A5902da7321054cEdAeB49ce9A6a3835Fc417',
+        USDT: process.env.NEXT_PUBLIC_USDT_ETHEREUM_TREASURY || '0xc9dE877a53f85BF51D76faed0C8c8842EFb35782',
+        USDC: process.env.NEXT_PUBLIC_USDC_ETHEREUM_TREASURY || '0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145'
+      },
+      bsc: {
+        BNB: process.env.NEXT_PUBLIC_BNB_BSC_TREASURY || '0x794F67aA174bD0A252BeCA0089490a58Cc695a05',
+        USDT: process.env.NEXT_PUBLIC_USDT_BSC_TREASURY || '0xC13527f3bBAaf4cd726d07a78da9C5b74876527F',
+        USDC: process.env.NEXT_PUBLIC_USDC_BSC_TREASURY || '0x21FCcbB9b9b7c620BCbA61B6668C30F64C22859c'
+      },
+      polygon: {
+        MATIC: process.env.NEXT_PUBLIC_MATIC_POLYGON_TREASURY || '0x6351f025E2DDe967A1FAD29d0fF44C3620F4EED7',
+        USDT: process.env.NEXT_PUBLIC_USDT_POLYGON_TREASURY || '0xd413afAB39D24462ACE36CFE5D710Ce9B813c84B',
+        USDC: process.env.NEXT_PUBLIC_USDC_POLYGON_TREASURY || '0xE97BF18735a1AB4A1bA9DDF284D7798A5B0f8a84'
+      }
+    }
+    const address = treasuryMap[selectedNetwork]?.[selectedToken] || 'Not configured'
+    return address
+  }
+
+  // Use real EPO contract data
+  const { stats: epoStats, isLoading: epoLoading, error: epoError, refetch: refetchEPO, purchaseBAK } = useEPOContract()
+  
+  // Initialize token price updates on component mount
+  useEffect(() => {
+    startTokenPriceUpdates()
+  }, [])
   const [bondingCurve, setBondingCurve] = useState<BondingCurveData>({
     currentPrice: 0.02,
     nextPrice: 0.02,
@@ -51,7 +191,24 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     marketCap: 0,
     liquidityPool: 2000000
   })
+  
+  // Get real contract data
+  const totalSold = epoStats ? parseFloat(epoStats.totalSold) : 0
+  const currentPrice = epoStats ? parseFloat(epoStats.price) : 0.02
+  const remainingSupply = epoStats ? parseFloat(epoStats.remainingSupply) : 100000000
+  const totalRaised = epoStats ? parseFloat(epoStats.totalRaised) : 0
+  const contractBalance = epoStats ? parseFloat(epoStats.contractBalance) : 0
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell'>('buy')
+  
+  // Liquidity lock state
+  const [liquidityStatus, setLiquidityStatus] = useState({
+    canSell: false,
+    totalLiquidity: '$0',
+    remainingToUnlock: '$1,000,000',
+    progressPercentage: 0,
+    timeEstimate: 'Loading...'
+  })
+  const [liquidityLoading, setLiquidityLoading] = useState(true)
 
   // Enhanced EPO Configuration with Bonding Curve
   // Enhanced EPO Configuration with Dual Pricing for Liquidity
@@ -181,22 +338,23 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     return { usd: totalUSD, avgPrice: sellPrice, priceImpact }
   }
 
-  // Update bonding curve data
+  // Update bonding curve data with real contract data
   useEffect(() => {
-    const currentPrice = calculateBuyPrice(totalSold)
-    const nextPrice = calculateBuyPrice(totalSold + 1000) // Price after buying 1000 tokens
-    const marketCap = totalSold * currentPrice
-    
-    setBondingCurve({
-      currentPrice,
-      nextPrice,
-      priceImpact: 0,
-      totalSupply: TOTAL_EPO_SUPPLY,
-      circulatingSupply: totalSold,
-      marketCap,
-      liquidityPool: 2000000 + marketCap * 0.1 // 10% of market cap added to liquidity
-    })
-  }, [totalSold])
+    if (epoStats) {
+      const nextPrice = calculateBuyPrice(totalSold + 1000) // Price after buying 1000 tokens
+      const marketCap = totalSold * currentPrice
+      
+      setBondingCurve({
+        currentPrice: currentPrice,
+        nextPrice,
+        priceImpact: 0,
+        totalSupply: TOTAL_EPO_SUPPLY,
+        circulatingSupply: totalSold,
+        marketCap,
+        liquidityPool: contractBalance + marketCap * 0.1 // Contract balance + estimated liquidity
+      })
+    }
+  }, [epoStats, totalSold, currentPrice, contractBalance])
 
   // Calculate time remaining and update countdown
   useEffect(() => {
@@ -228,15 +386,8 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     return `${days}d ${hours}h ${minutes}m ${seconds}s`
   }
 
-  // Calculate total sold from transactions
-  useEffect(() => {
-    const sold = transactions.reduce((sum, tx) => {
-      if (tx.type === 'buy') return sum + tx.bakAmount
-      if (tx.type === 'sell') return sum - tx.bakAmount
-      return sum
-    }, 0)
-    setTotalSold(Math.max(0, sold))
-  }, [transactions])
+  // Removed mock transaction calculation - now using real contract data
+  // Real totalSold comes from epoStats.totalSold
 
   // Check if EPO can be extended
   const canExtendEPO = (): boolean => {
@@ -250,17 +401,18 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     setIsCorrectNetwork(correctNetwork || false)
   }
 
-  // Calculate BAK tokens and price impact using bonding curve
+  // Calculate BAK tokens using real contract price
   useEffect(() => {
-    if (purchaseAmount && !isNaN(parseFloat(purchaseAmount))) {
+    if (purchaseAmount && !isNaN(parseFloat(purchaseAmount)) && currentPrice > 0) {
       const selectedTokenData = supportedTokens[selectedToken]
       const tokenAmount = parseFloat(purchaseAmount)
       const usdValue = tokenAmount * selectedTokenData.price
       
       if (tradeMode === 'buy') {
-        const result = calculateTokensFromUSD(usdValue, totalSold)
-        setBakAmount(result.tokens.toFixed(2))
-        setPriceImpact(result.priceImpact)
+        // Simple calculation using current contract price
+        const bakTokens = usdValue / currentPrice
+        setBakAmount(bakTokens.toFixed(2))
+        setPriceImpact(0) // Minimal price impact for now
       } else {
         // For sell mode, purchaseAmount is BAK tokens
         const result = calculateUSDFromTokens(tokenAmount, totalSold)
@@ -271,9 +423,9 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
       setBakAmount('')
       setPriceImpact(0)
     }
-  }, [purchaseAmount, selectedToken, totalSold, tradeMode])
+  }, [purchaseAmount, selectedToken, currentPrice, tradeMode])
 
-  // Enhanced Purchase/Sell Function
+  // Real Purchase Function using BrainArkEPOComplete contract
   const executeTrade = async (): Promise<void> => {
     if (!isConnected || !address) {
       toast.error('Please connect your wallet first')
@@ -290,11 +442,9 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
       return
     }
 
-    if (priceImpact > 10) {
-      const confirmed = window.confirm(
-        `High price impact detected (${priceImpact.toFixed(2)}%). Do you want to continue?`
-      )
-      if (!confirmed) return
+    if (remainingSupply <= 0) {
+      toast.error('All BAK tokens have been sold')
+      return
     }
 
     setIsProcessing(true)
@@ -303,78 +453,50 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
       const selectedTokenData = supportedTokens[selectedToken]
       const inputAmount = parseFloat(purchaseAmount)
       
-      let transaction: any = {
-        id: Date.now().toString(),
-        from: address,
-        tokenUsed: selectedToken,
-        type: tradeMode,
-        priceImpact: priceImpact,
-        slippage: slippage,
-        timestamp: new Date().toISOString(),
-        status: 'completed',
-        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        gasUsed: Math.floor(Math.random() * 50000) + 150000,
-        gasPrice: Math.floor(Math.random() * 20) + 20
-      }
-
       if (tradeMode === 'buy') {
-        const usdValue = inputAmount * selectedTokenData.price
-        const result = calculateTokensFromUSD(usdValue, totalSold)
+        // Convert input to wei for contract call (assuming ETH payment for now)
+        const ethAmount = inputAmount * selectedTokenData.price / 3420.75 // Rough ETH conversion
+        const weiAmount = (ethAmount * 1e18).toString()
         
-        if (totalSold + result.tokens > TOTAL_EPO_SUPPLY) {
-          const maxPossible = TOTAL_EPO_SUPPLY - totalSold
-          const confirmed = window.confirm(
-            `Only ${maxPossible.toFixed(2)} BAK tokens remaining. Purchase ${maxPossible.toFixed(2)} BAK instead?`
-          )
-          if (!confirmed) {
-            setIsProcessing(false)
-            return
-          }
-          result.tokens = maxPossible
-        }
-
-        transaction = {
-          ...transaction,
-          tokenAmount: inputAmount,
-          usdValue: usdValue,
-          bakAmount: result.tokens,
-          avgPrice: result.avgPrice,
-          fees: (usdValue * selectedTokenData.fees) / 100
-        }
+        // Call real contract purchase function
+        const txHash = await purchaseBAK(weiAmount)
+        
+        toast.success(
+          `Purchase transaction submitted!\nTx Hash: ${txHash}\nExpected BAK: ${bakAmount} tokens`,
+          { duration: 8000 }
+        )
+        
+        // Refresh contract data after purchase
+        setTimeout(() => {
+          refetchEPO()
+        }, 3000)
+        
       } else {
-        // Sell mode
-        const result = calculateUSDFromTokens(inputAmount, totalSold)
-        const tokenAmountOut = result.usd / selectedTokenData.price
-        
-        transaction = {
-          ...transaction,
-          tokenAmount: tokenAmountOut,
-          usdValue: result.usd,
-          bakAmount: inputAmount,
-          avgPrice: result.avgPrice,
-          fees: (result.usd * selectedTokenData.fees) / 100
+        // Sell mode - Check liquidity lock first
+        const sellPermission = await checkSellPermission()
+        if (!sellPermission) {
+          toast.error(
+            `Selling is locked until $1M liquidity generation. Current: ${liquidityStatus.totalLiquidity}`,
+            { duration: 6000 }
+          )
+          setIsProcessing(false)
+          return
         }
+        
+        // Selling not implemented in BrainArkEPOComplete yet
+        toast.error('Selling functionality coming soon. Contract currently only supports buying.')
+        setIsProcessing(false)
+        return
       }
-      
-      // Simulate transaction processing
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      
-      const updatedTransactions = [...transactions, transaction]
-      setTransactions(updatedTransactions)
-      localStorage.setItem('epoTransactions', JSON.stringify(updatedTransactions))
-
-      toast.success(
-        `Successfully ${tradeMode === 'buy' ? 'purchased' : 'sold'} ${Math.abs(transaction.bakAmount).toFixed(2)} BAK tokens!\nAvg Price: $${transaction.avgPrice.toFixed(4)}\nPrice Impact: ${priceImpact.toFixed(3)}%`
-      )
       
       // Reset form
       setPurchaseAmount('')
       setBakAmount('')
       setPriceImpact(0)
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Trade failed:', error)
-      toast.error('Trade failed. Please try again.')
+      toast.error(`Transaction failed: ${error.message || 'Please try again'}`)
     }
 
     setIsProcessing(false)
@@ -386,6 +508,28 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     if (stored) {
       setTransactions(JSON.parse(stored))
     }
+  }, [])
+
+  // Load liquidity status
+  useEffect(() => {
+    const loadLiquidityStatus = async () => {
+      setLiquidityLoading(true)
+      try {
+        const status = await liquidityTracker.getLiquidityStatus()
+        setLiquidityStatus(status)
+      } catch (error) {
+        console.error('Error loading liquidity status:', error)
+        toast.error('Failed to load liquidity status')
+      } finally {
+        setLiquidityLoading(false)
+      }
+    }
+
+    loadLiquidityStatus()
+    
+    // Refresh every 5 minutes
+    const interval = setInterval(loadLiquidityStatus, 5 * 60 * 1000)
+    return () => clearInterval(interval)
   }, [])
 
   // Get user's transactions
@@ -473,8 +617,15 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
             {formatTimeRemaining(timeRemaining)}
           </div>
           <div className="text-lg text-gray-700">
-            {totalSold.toLocaleString()} / {TOTAL_EPO_SUPPLY.toLocaleString()} BAK Sold ({progressPercentage.toFixed(2)}%)
+            {epoLoading ? 'Loading contract data...' : (
+              `${totalSold.toLocaleString()} / ${TOTAL_EPO_SUPPLY.toLocaleString()} BAK Sold (${((totalSold / TOTAL_EPO_SUPPLY) * 100).toFixed(2)}%)`
+            )}
           </div>
+          {epoError && (
+            <div className="text-sm text-red-600 mt-2">
+              Contract Error: {epoError}
+            </div>
+          )}
         </div>
         
         <div className="w-full bg-gray-200 rounded-full h-6 mb-4">
@@ -496,6 +647,100 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
               🔄 EPO can be extended as 100M coins target not reached!
             </p>
           </div>
+        )}
+      </div>
+    )
+  }
+
+
+  // Liquidity Lock Progress Display
+  const LiquidityLockDisplay: React.FC = () => {
+    const LockIcon = liquidityStatus.canSell ? LockOpenIcon : LockClosedIcon
+    const lockColor = liquidityStatus.canSell ? 'text-green-500' : 'text-red-500'
+    
+    return (
+      <div className="card-brilliant p-6 mb-6">
+        <div className="flex items-center justify-center mb-4">
+          <LockIcon className={`h-8 w-8 ${lockColor} mr-3`} />
+          <h3 className="text-2xl font-bold text-gray-900">
+            🏦 Treasury Liquidity Lock
+          </h3>
+        </div>
+        
+        {liquidityLoading ? (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+            <p className="text-gray-600">Loading liquidity data...</p>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-4">
+              <div className="text-3xl font-bold text-gray-900 mb-2">
+                {liquidityStatus.totalLiquidity} / $1,000,000
+              </div>
+              <div className="text-lg text-gray-700 mb-2">
+                {liquidityStatus.canSell ? (
+                  <span className="text-green-600 font-semibold">
+                    🔓 After $1M dollar liquidity generation: Selling unlocked at a fixed price, please bear with us as we are generating liquidity for the project.
+                  </span>
+                ) : (
+                  <span className="text-red-600">
+                    🔒 Selling Locked - Need {liquidityStatus.remainingToUnlock} more
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-500">
+                Estimated time to unlock: {liquidityStatus.timeEstimate}
+              </div>
+            </div>
+            
+            <div className="w-full bg-gray-200 rounded-full h-6 mb-4">
+              <div 
+                className={`h-6 rounded-full transition-all duration-500 flex items-center justify-center ${
+                  liquidityStatus.canSell 
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-600' 
+                    : 'bg-gradient-to-r from-orange-400 to-red-500'
+                }`}
+                style={{ width: `${Math.min(liquidityStatus.progressPercentage, 100)}%` }}
+              >
+                {liquidityStatus.progressPercentage > 10 && (
+                  <span className="text-white text-sm font-medium">
+                    {liquidityStatus.progressPercentage.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="bg-blue-50 p-3 rounded-lg text-center">
+                <div className="text-sm text-blue-600 font-semibold">Current Liquidity</div>
+                <div className="text-lg font-bold text-blue-800">{liquidityStatus.totalLiquidity}</div>
+              </div>
+              <div className="bg-orange-50 p-3 rounded-lg text-center">
+                <div className="text-sm text-orange-600 font-semibold">Remaining to Unlock</div>
+                <div className="text-lg font-bold text-orange-800">{liquidityStatus.remainingToUnlock}</div>
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg text-center">
+                <div className="text-sm text-green-600 font-semibold">Progress</div>
+                <div className="text-lg font-bold text-green-800">{liquidityStatus.progressPercentage.toFixed(1)}%</div>
+              </div>
+            </div>
+
+            {!liquidityStatus.canSell && (
+              <div className="mt-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+                <div className="flex items-center">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2" />
+                  <p className="text-yellow-800 text-sm font-semibold">
+                    Selling BAK native coins is temporarily locked to ensure liquidity for all users.
+                  </p>
+                </div>
+                <p className="text-yellow-700 text-sm mt-2">
+                  After $1M dollar liquidity generation: Selling will be unlocked at a fixed price. Please bear with us as we are generating liquidity for the project.
+                  This ensures stable liquidity and protects all investors.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     )
@@ -561,10 +806,12 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-deep-black py-8">
+    <div className="min-h-screen bg-deep-black py-8 relative">
+      {/* Shader Background */}
+      <EPOShaderBackground />
       <QuickActionsTab />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-emerald-500 via-green-600 to-teal-700 bg-clip-text text-transparent">
@@ -576,6 +823,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
         </div>
 
         <EPOProgressDisplay />
+        <LiquidityLockDisplay />
         <BondingCurveDisplay />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
@@ -608,22 +856,28 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600">BAK Position:</div>
-                        <div className="font-semibold">{netBakPosition.toFixed(2)} BAK</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">Net P&L:</div>
-                        <div className={`font-semibold ${netUsdPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ${netUsdPosition.toFixed(2)}
+                        <div className="text-sm text-gray-600">Contract Balance:</div>
+                        <div className="font-semibold">
+                          {epoLoading ? 'Loading...' : `${contractBalance.toFixed(2)} BAK`}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600">Total Fees:</div>
-                        <div className="font-semibold">${userStats.totalFeesPaid.toFixed(4)}</div>
+                        <div className="text-sm text-gray-600">Total Raised:</div>
+                        <div className="font-semibold text-green-600">
+                          {epoLoading ? 'Loading...' : `$${totalRaised.toFixed(2)}`}
+                        </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600">Trades:</div>
-                        <div className="font-semibold">{userTransactions.length}</div>
+                        <div className="text-sm text-gray-600">Remaining Supply:</div>
+                        <div className="font-semibold">
+                          {epoLoading ? 'Loading...' : `${remainingSupply.toFixed(0)} BAK`}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600">Contract Status:</div>
+                        <div className="font-semibold">
+                          {epoLoading ? 'Loading...' : (epoError ? 'Error' : 'Active')}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -646,13 +900,23 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setTradeMode('sell')}
-                        className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
-                          tradeMode === 'sell'
+                        disabled={!liquidityStatus.canSell}
+                        className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 relative ${
+                          !liquidityStatus.canSell
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                            : tradeMode === 'sell'
                             ? 'bg-red-500 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
+                        title={!liquidityStatus.canSell ? 'Selling locked until treasury reaches $1M' : ''}
                       >
+                        {!liquidityStatus.canSell && (
+                          <LockClosedIcon className="h-4 w-4 inline mr-1" />
+                        )}
                         💰 Sell BAK
+                        {!liquidityStatus.canSell && (
+                          <span className="text-xs block">Locked</span>
+                        )}
                       </button>
                     </div>
                     
@@ -684,43 +948,139 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Token Selection */}
-                  <div className="card-brilliant p-4">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                      💱 Select {tradeMode === 'buy' ? 'Payment' : 'Receive'} Token
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {Object.entries(supportedTokens).map(([key, token]) => (
-                        <div
-                          key={key}
-                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                            selectedToken === key
-                              ? 'border-emerald-500 bg-emerald-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedToken(key)}
-                        >
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">{token.icon}</span>
-                            <div>
-                              <div className="font-semibold text-gray-900">{token.symbol}</div>
-                              <div className="text-sm text-gray-600">{token.name}</div>
+                  {/* Cross-Chain Token Selection */}
+                  {tradeMode === 'buy' && (
+                    <>
+                      {/* Network Selection */}
+                      <div className="card-brilliant p-4">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          🌐 Select Payment Network
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {[
+                            { key: 'ethereum', name: 'Ethereum', icon: '💎', chainId: 1, color: 'text-blue-500' },
+                            { key: 'bsc', name: 'BSC', icon: '🟡', chainId: 56, color: 'text-yellow-500' },
+                            { key: 'polygon', name: 'Polygon', icon: '🟣', chainId: 137, color: 'text-purple-500' },
+                          ].map((network) => (
+                            <div
+                              key={network.key}
+                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                selectedNetwork === network.key
+                                  ? 'border-emerald-500 bg-emerald-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => setSelectedNetwork(network.key)}
+                            >
+                              <div className="text-center">
+                                <div className="text-3xl mb-2">{network.icon}</div>
+                                <div className="font-semibold text-gray-900">{network.name}</div>
+                                <div className={`text-sm ${network.color}`}>Chain: {network.chainId}</div>
+                                {selectedNetwork === network.key && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      switchToSelectedNetwork(network.key)
+                                    }}
+                                    disabled={isSwitchingNetwork}
+                                    className={`mt-2 px-3 py-1 text-white text-xs rounded-full transition-colors duration-200 ${
+                                      isSwitchingNetwork 
+                                        ? 'bg-yellow-500 cursor-not-allowed' 
+                                        : 'bg-emerald-500 hover:bg-emerald-600'
+                                    }`}
+                                  >
+                                    {isSwitchingNetwork ? '⏳ Switching...' : '🔄 Switch Network'}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <div className="font-semibold text-gray-900">
-                              ${token.price.toFixed(2)}
-                            </div>
-                            <div className={`text-sm font-medium ${
-                              token.change24h >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Cross-Chain Token Selection */}
+                      <div className="card-brilliant p-4">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                          💱 Select Payment Token on {selectedNetwork ? selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1) : 'Network'}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {getTokensForNetwork(selectedNetwork).map((token) => (
+                            <div
+                              key={token.symbol}
+                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                                selectedToken === token.symbol
+                                  ? 'border-emerald-500 bg-emerald-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => setSelectedToken(token.symbol)}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <span className="text-2xl">{token.icon}</span>
+                                <div>
+                                  <div className="font-semibold text-gray-900">{token.symbol}</div>
+                                  <div className="text-sm text-gray-600">{token.name}</div>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <div className="font-semibold text-gray-900">
+                                  ${token.price.toFixed(2)}
+                                </div>
+                                <div className={`text-sm font-medium ${
+                                  token.change24h >= 0 ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
+                                </div>
+                              </div>
+                              {token.native && (
+                                <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded mt-2">
+                                  Native Token
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Regular Token Selection for Sell */}
+                  {tradeMode === 'sell' && (
+                    <div className="card-brilliant p-4">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900">
+                        💱 Select Receive Token
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(supportedTokens).map(([key, token]) => (
+                          <div
+                            key={key}
+                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                              selectedToken === key
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => setSelectedToken(key)}
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-2xl">{token.icon}</span>
+                              <div>
+                                <div className="font-semibold text-gray-900">{token.symbol}</div>
+                                <div className="text-sm text-gray-600">{token.name}</div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div className="font-semibold text-gray-900">
+                                ${token.price.toFixed(2)}
+                              </div>
+                              <div className={`text-sm font-medium ${
+                                token.change24h >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Trading Calculator */}
                   <div className="card-brilliant p-4">
@@ -813,6 +1173,51 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Cross-Chain Treasury Info */}
+                    {tradeMode === 'buy' && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-blue-900">🌐 Cross-Chain Payment Details</h4>
+                          <div className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                            💡 Switch network for seamless payment
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-blue-800">Network:</span>
+                            <span className="font-medium text-blue-900">{selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-800">Payment Token:</span>
+                            <span className="font-medium text-blue-900">{selectedToken}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-800">Treasury Address:</span>
+                            <span className="font-mono text-xs text-blue-900">
+                              {getTreasuryAddress()}
+                            </span>
+                          </div>
+                          <div className="text-xs text-blue-600 mt-2">
+                            💡 Your payment goes to BrainArk treasury → Oracle processes → BAK delivered to your wallet
+                          </div>
+                          <button
+                            onClick={() => switchToSelectedNetwork(selectedNetwork)}
+                            disabled={isSwitchingNetwork}
+                            className={`mt-3 w-full px-4 py-2 font-medium rounded-lg transition-all duration-200 text-sm ${
+                              isSwitchingNetwork
+                                ? 'bg-yellow-500 cursor-not-allowed text-white'
+                                : 'bg-gradient-to-r from-blue-500 to-emerald-500 hover:from-blue-600 hover:to-emerald-600 text-white'
+                            }`}
+                          >
+                            {isSwitchingNetwork 
+                              ? '⏳ Switching Network...' 
+                              : `🔄 Switch to ${selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1)} Network`
+                            }
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Trade Button */}
                     <button
                       onClick={executeTrade}
@@ -838,7 +1243,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                        (tradeMode === 'buy' && totalSold >= TOTAL_EPO_SUPPLY) ? '🔒 All Tokens Sold' :
                        (tradeMode === 'sell' && parseFloat(purchaseAmount) > netBakPosition) ? '❌ Insufficient BAK Balance' :
                        priceImpact > 5 ? `⚠️ ${tradeMode === 'buy' ? 'Buy' : 'Sell'} Anyway (${priceImpact.toFixed(2)}% impact)` :
-                       tradeMode === 'buy' ? `🛒 Buy ${bakAmount || '0'} BAK` : `💰 Sell ${purchaseAmount || '0'} BAK`}
+                       tradeMode === 'buy' ? `🌐 Buy ${bakAmount || '0'} BAK with ${selectedToken} (${selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1)})` : `💰 Sell ${purchaseAmount || '0'} BAK`}
                     </button>
                   </div>
                 </div>
@@ -853,7 +1258,9 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
               <div className="space-y-4">
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Current BAK Price</div>
-                  <div className="font-semibold text-white">${bondingCurve.currentPrice.toFixed(4)}</div>
+                  <div className="font-semibold text-white">
+                    {epoLoading ? 'Loading...' : `$${currentPrice.toFixed(4)}`}
+                  </div>
                 </div>
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Price Range</div>
@@ -865,7 +1272,9 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                 </div>
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Tokens Sold</div>
-                  <div className="font-semibold text-white">{totalSold.toFixed(0)} BAK</div>
+                  <div className="font-semibold text-white">
+                    {epoLoading ? 'Loading...' : `${totalSold.toFixed(0)} BAK`}
+                  </div>
                 </div>
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Time Remaining</div>

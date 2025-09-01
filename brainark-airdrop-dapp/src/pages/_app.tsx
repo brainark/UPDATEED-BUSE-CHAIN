@@ -1,12 +1,15 @@
 import '@/styles/globals.css'
-import '@rainbow-me/rainbowkit/styles.css'
+import '@/App.css'
+import '@/styles/layout-fixes.css'
 import type { AppProps } from 'next/app'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
-import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { Toaster } from 'react-hot-toast'
-import { wagmiConfig } from '@/utils/wagmi'
+import { wagmiConfig } from '@/utils/wagmiConfig'
+import WalletStatus from '@/components/WalletStatus'
 import { useState, useEffect } from 'react'
+import MobileResponsiveLayout from '@/components/MobileResponsiveLayout'
+import { ShaderSettingsProvider } from '@/components/shaders'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,38 +31,65 @@ export default function App({ Component, pageProps }: AppProps) {
     const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
     setIsDark(darkMode)
 
-    // Suppress WalletConnect and WebSocket errors in development
-    if (process.env.NODE_ENV === 'development') {
-      const originalError = console.error
-      const originalWarn = console.warn
-      
-      console.error = (...args) => {
-        const message = args[0]?.toString() || ''
-        if (
-          message.includes('WebSocket connection closed') ||
-          message.includes('Unauthorized: invalid key') ||
-          message.includes('WalletConnect') ||
-          message.includes('projectId') ||
-          message.includes('Failed to load resource') ||
-          message.includes('explorer-api.walletconnect.com')
-        ) {
-          // Suppress these errors in development
-          return
-        }
-        originalError.apply(console, args)
+    // Suppress external service errors and warnings (both dev and production)
+    const originalError = console.error
+    const originalWarn = console.warn
+    
+    console.error = (...args) => {
+      const message = args[0]?.toString() || ''
+      if (
+        message.includes('WebSocket connection closed') ||
+        message.includes('Unauthorized: invalid key') ||
+        message.includes('WalletConnect') ||
+        message.includes('projectId') ||
+        message.includes('Failed to load resource') ||
+        message.includes('explorer-api.walletconnect.com') ||
+        message.includes('cca-lite.coinbase.com') ||
+        message.includes('Analytics SDK') ||
+        message.includes('TypeError: Failed to fetch') ||
+        message.includes('net::ERR_CONNECTION_TIMED_OUT') ||
+        message.includes('ERR_NETWORK') ||
+        message.includes('ERR_INTERNET_DISCONNECTED') ||
+        message.includes('wallet_requestPermissions') ||
+        message.includes('already pending') ||
+        message.includes('Connection failed')
+      ) {
+        // Suppress these errors
+        return
       }
+      originalError.apply(console, args)
+    }
 
-      console.warn = (...args) => {
-        const message = args[0]?.toString() || ''
+    console.warn = (...args) => {
+      const message = args[0]?.toString() || ''
+      if (
+        message.includes('WalletConnect') ||
+        message.includes('projectId') ||
+        message.includes('Lit is in dev mode') ||
+        message.includes('MetaMask - RPC Error') ||
+        message.includes('wallet_requestPermissions') ||
+        message.includes('already pending')
+      ) {
+        // Suppress these warnings
+        return
+      }
+      originalWarn.apply(console, args)
+    }
+
+    // Block problematic external requests at the network level
+    if (typeof window !== 'undefined' && window.fetch) {
+      const originalFetch = window.fetch
+      window.fetch = (...args) => {
+        const url = args[0]?.toString() || ''
         if (
-          message.includes('WalletConnect') ||
-          message.includes('projectId') ||
-          message.includes('Lit is in dev mode')
+          url.includes('cca-lite.coinbase.com') ||
+          url.includes('coinbase.com/metrics') ||
+          url.includes('coinbase.com/amp')
         ) {
-          // Suppress these warnings in development
-          return
+          // Return a resolved promise to prevent errors
+          return Promise.resolve(new Response('{}', { status: 200 }))
         }
-        originalWarn.apply(console, args)
+        return originalFetch.apply(window, args)
       }
     }
   }, [])
@@ -69,9 +99,10 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <div className="min-h-screen bg-deep-black">
+        <ShaderSettingsProvider>
+          <MobileResponsiveLayout>
             <Component {...pageProps} />
+            <WalletStatus />
             <Toaster
               position="top-right"
               toastOptions={{
@@ -96,8 +127,8 @@ export default function App({ Component, pageProps }: AppProps) {
                 },
               }}
             />
-          </div>
-        </RainbowKitProvider>
+          </MobileResponsiveLayout>
+        </ShaderSettingsProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )

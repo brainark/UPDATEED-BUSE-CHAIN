@@ -49,9 +49,9 @@ export default function SuccessPage() {
     
     switch (transactionData.type) {
       case 'airdrop':
-        return `You have successfully claimed ${transactionData.amount || '10'} BAK tokens from the airdrop!`
+        return `You have successfully claimed ${transactionData.amount || '10'} BAK native coins from the airdrop!`
       case 'epo':
-        return `You have successfully purchased ${transactionData.amount || 'N/A'} BAK tokens for ${transactionData.token || 'N/A'}!`
+        return `You have successfully purchased ${transactionData.amount || 'N/A'} BAK native coins for ${transactionData.token || 'N/A'}!`
       default:
         return 'Your transaction has been completed successfully.'
     }
@@ -164,8 +164,8 @@ export default function SuccessPage() {
               {/* Additional Info */}
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Your tokens will appear in your wallet shortly. If you don't see them, 
-                  try refreshing your wallet or adding the BAK token contract address.
+                  Your native coins will appear in your wallet shortly. If you don't see them, 
+                  try refreshing your wallet or adding the BAK native coin contract address.
                 </p>
               </div>
             </div>

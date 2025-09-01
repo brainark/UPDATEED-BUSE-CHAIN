@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon, MagnifyingGlassIcon, ChartBarIcon, CubeIcon, BoltIcon, GlobeAltIcon, WalletIcon } from '@heroicons/react/24/outline'
 import AutoWalletConnection from './AutoWalletConnection'
+import Web3 from 'web3'
 
 interface NetworkStats {
   blockNumber: number
@@ -34,14 +35,20 @@ interface Block {
   miner: string
 }
 
+interface AddressInfo {
+  address: string
+  balance: string
+  transactionCount: number
+  firstSeen: string
+}
+
+type SearchResult = 
+  | { type: 'transaction', data: Transaction }
+  | { type: 'block', data: Block }
+  | { type: 'address', data: AddressInfo }
+
 const BrainArkExplorer: React.FC = () => {
-  const [address, setAddress] = useState<string>('')
-  const [isConnected, setIsConnected] = useState<boolean>(false)
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<'transactions' | 'blocks' | 'analytics'>('transactions')
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [searchType, setSearchType] = useState<'transaction' | 'block' | 'address'>('transaction')
-  const [loading, setLoading] = useState<boolean>(true)
+  // State management
   const [networkStats, setNetworkStats] = useState<NetworkStats>({
     blockNumber: 0,
     gasPrice: '0',
@@ -52,61 +59,110 @@ const BrainArkExplorer: React.FC = () => {
   })
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
   const [recentBlocks, setRecentBlocks] = useState<Block[]>([])
-  const [searchResults, setSearchResults] = useState<any>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [searchType, setSearchType] = useState<'transaction' | 'block' | 'address'>('transaction')
+  const [searchResults, setSearchResults] = useState<SearchResult | null>(null)
+  const [activeTab, setActiveTab] = useState<'transactions' | 'blocks' | 'analytics'>('transactions')
+  const [isConnected, setIsConnected] = useState<boolean>(false)
+  const [address, setAddress] = useState<string>('')
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(false)
 
-  // Handle wallet connection changes
+  // Handle wallet connection change
   const handleConnectionChange = (connected: boolean, walletAddress?: string, correctNetwork?: boolean) => {
     setIsConnected(connected)
     setAddress(walletAddress || '')
     setIsCorrectNetwork(correctNetwork || false)
   }
 
-  // Mock data generation for demonstration
-  const generateMockData = () => {
-    // Generate mock network stats
-    const mockStats: NetworkStats = {
-      blockNumber: Math.floor(Math.random() * 1000000) + 500000,
-      gasPrice: (Math.random() * 50 + 10).toFixed(2),
-      peerCount: Math.floor(Math.random() * 50) + 20,
-      hashrate: (Math.random() * 500 + 100).toFixed(2),
-      totalTransactions: Math.floor(Math.random() * 10000000) + 1000000,
-      activeAddresses: Math.floor(Math.random() * 100000) + 50000
+  // Constants
+  const RPC_URL = 'https://rpc.brainark.online'
+  const EXPLORER_URL = 'https://explorer.brainark.online'
+  const web3 = new Web3(new Web3.providers.HttpProvider(RPC_URL))
+
+  // Get real data from the blockchain
+  const fetchBlockchainData = async () => {
+    try {
+      setLoading(true)
+      
+      // Get current block number
+      const blockNumber = await web3.eth.getBlockNumber()
+      
+      // Get gas price
+      const gasPrice = await web3.eth.getGasPrice()
+      const gasPriceGwei = parseFloat(web3.utils.fromWei(gasPrice, 'gwei')).toFixed(2)
+      
+      // Get latest blocks
+      const latestBlocks: Block[] = []
+      const blocksToFetch = Math.min(10, Number(blockNumber))
+      
+      for (let i = 0; i < blocksToFetch; i++) {
+        const block = await web3.eth.getBlock(Number(blockNumber) - i)
+        if (block) {
+          latestBlocks.push({
+            number: Number(block.number),
+            hash: block.hash || '',
+            timestamp: new Date(Number(block.timestamp) * 1000).toISOString(),
+            transactions: block.transactions?.length || 0,
+            gasUsed: (block.gasUsed || 0).toString(),
+            gasLimit: (block.gasLimit || 0).toString(),
+            miner: block.miner || '0x0000000000000000000000000000000000000000'
+          })
+        }
+      }
+      
+      // Get latest transactions
+      const latestTransactions: Transaction[] = []
+      for (const block of latestBlocks.slice(0, 3)) { // Only check the latest 3 blocks for transactions
+        if (block.transactions > 0) {
+          const fullBlock = await web3.eth.getBlock(block.number, true)
+          for (const tx of fullBlock.transactions.slice(0, 5)) { // Get up to 5 transactions per block
+            if (typeof tx === 'object' && tx !== null) {
+              const receipt = await web3.eth.getTransactionReceipt(tx.hash)
+              latestTransactions.push({
+                hash: tx.hash || '',
+                from: tx.from || '',
+                to: tx.to || '0x0000000000000000000000000000000000000000', // Contract creation
+                value: web3.utils.fromWei(tx.value || '0', 'ether'),
+                gasUsed: receipt ? receipt.gasUsed.toString() : '0',
+                gasPrice: web3.utils.fromWei(tx.gasPrice || '0', 'gwei'),
+                blockNumber: Number(tx.blockNumber || 0),
+                timestamp: block.timestamp,
+                status: receipt ? (receipt.status ? 'success' : 'failed') : 'pending'
+              })
+            }
+            
+            if (latestTransactions.length >= 10) break
+          }
+        }
+        if (latestTransactions.length >= 10) break
+      }
+      
+      // Set network stats
+      const stats: NetworkStats = {
+        blockNumber: Number(blockNumber),
+        gasPrice: gasPriceGwei,
+        peerCount: 0, // Not easily available from web3
+        hashrate: '0', // Not easily available from web3
+        totalTransactions: 0, // Would require scanning all blocks
+        activeAddresses: 0 // Would require external indexing
+      }
+      
+      setNetworkStats(stats)
+      setRecentTransactions(latestTransactions)
+      setRecentBlocks(latestBlocks)
+    } catch (error) {
+      console.error('Error fetching blockchain data:', error)
+      toast.error('Failed to load blockchain data. Using cached data instead.')
+    } finally {
+      setLoading(false)
     }
-
-    // Generate mock transactions
-    const mockTransactions: Transaction[] = Array.from({ length: 10 }, (_, i) => ({
-      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-      from: `0x${Math.random().toString(16).substr(2, 40)}`,
-      to: `0x${Math.random().toString(16).substr(2, 40)}`,
-      value: (Math.random() * 10).toFixed(4),
-      gasUsed: Math.floor(Math.random() * 100000 + 21000).toString(),
-      gasPrice: (Math.random() * 50 + 10).toFixed(2),
-      blockNumber: mockStats.blockNumber - i,
-      timestamp: new Date(Date.now() - i * 15000).toISOString(),
-      status: Math.random() > 0.1 ? 'success' : 'failed'
-    }))
-
-    // Generate mock blocks
-    const mockBlocks: Block[] = Array.from({ length: 10 }, (_, i) => ({
-      number: mockStats.blockNumber - i,
-      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-      timestamp: new Date(Date.now() - i * 15000).toISOString(),
-      transactions: Math.floor(Math.random() * 200) + 10,
-      gasUsed: Math.floor(Math.random() * 15000000 + 1000000).toString(),
-      gasLimit: '15000000',
-      miner: `0x${Math.random().toString(16).substr(2, 40)}`
-    }))
-
-    setNetworkStats(mockStats)
-    setRecentTransactions(mockTransactions)
-    setRecentBlocks(mockBlocks)
-    setLoading(false)
   }
 
   // Load data on component mount
   useEffect(() => {
-    generateMockData()
-    const interval = setInterval(generateMockData, 30000) // Update every 30 seconds
+    fetchBlockchainData()
+    const interval = setInterval(fetchBlockchainData, 30000) // Update every 30 seconds
     return () => clearInterval(interval)
   }, [])
 
@@ -120,55 +176,96 @@ const BrainArkExplorer: React.FC = () => {
     setLoading(true)
     
     try {
-      // Simulate search delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Mock search results
+      // Search for real blockchain data
       if (searchType === 'transaction') {
-        setSearchResults({
-          type: 'transaction',
-          data: {
-            hash: searchQuery,
-            from: `0x${Math.random().toString(16).substr(2, 40)}`,
-            to: `0x${Math.random().toString(16).substr(2, 40)}`,
-            value: (Math.random() * 10).toFixed(4),
-            gasUsed: Math.floor(Math.random() * 100000 + 21000).toString(),
-            gasPrice: (Math.random() * 50 + 10).toFixed(2),
-            blockNumber: Math.floor(Math.random() * 1000000) + 500000,
-            timestamp: new Date().toISOString(),
-            status: 'success'
+        try {
+          const tx = await web3.eth.getTransaction(searchQuery);
+          if (!tx) {
+            toast.error('Transaction not found');
+            setLoading(false);
+            return;
           }
-        })
+          
+          const receipt = await web3.eth.getTransactionReceipt(searchQuery);
+          const block = await web3.eth.getBlock(tx.blockNumber);
+          
+          setSearchResults({
+            type: 'transaction',
+            data: {
+              hash: tx.hash || '',
+              from: tx.from || '',
+              to: tx.to || '0x0000000000000000000000000000000000000000',
+              value: web3.utils.fromWei(tx.value || '0', 'ether'),
+              gasUsed: receipt ? receipt.gasUsed.toString() : '0',
+              gasPrice: web3.utils.fromWei(tx.gasPrice || '0', 'gwei'),
+              blockNumber: Number(tx.blockNumber || 0),
+              timestamp: new Date(Number(block.timestamp || 0) * 1000).toISOString(),
+              status: receipt ? (receipt.status ? 'success' : 'failed') : 'pending'
+            }
+          });
+        } catch (error) {
+          console.error('Error searching transaction:', error);
+          toast.error('Failed to find transaction. Please check the hash and try again.');
+        }
       } else if (searchType === 'block') {
-        setSearchResults({
-          type: 'block',
-          data: {
-            number: parseInt(searchQuery) || Math.floor(Math.random() * 1000000) + 500000,
-            hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-            timestamp: new Date().toISOString(),
-            transactions: Math.floor(Math.random() * 200) + 10,
-            gasUsed: Math.floor(Math.random() * 15000000 + 1000000).toString(),
-            gasLimit: '15000000',
-            miner: `0x${Math.random().toString(16).substr(2, 40)}`
+        try {
+          let blockData;
+          const isNumber = !isNaN(parseInt(searchQuery));
+          
+          if (isNumber) {
+            blockData = await web3.eth.getBlock(parseInt(searchQuery));
+          } else {
+            blockData = await web3.eth.getBlock(searchQuery);
           }
-        })
+          
+          if (!blockData) {
+            toast.error('Block not found');
+            setLoading(false);
+            return;
+          }
+          
+          setSearchResults({
+            type: 'block',
+            data: {
+              number: Number(blockData.number),
+              hash: blockData.hash || '',
+              timestamp: new Date(Number(blockData.timestamp) * 1000).toISOString(),
+              transactions: blockData.transactions?.length || 0,
+              gasUsed: (blockData.gasUsed || 0).toString(),
+              gasLimit: (blockData.gasLimit || 0).toString(),
+              miner: blockData.miner || '0x0000000000000000000000000000000000000000'
+            }
+          });
+        } catch (error) {
+          console.error('Error searching block:', error);
+          toast.error('Failed to find block. Please check the number/hash and try again.');
+        }
       } else {
-        setSearchResults({
-          type: 'address',
-          data: {
-            address: searchQuery,
-            balance: (Math.random() * 1000).toFixed(4),
-            transactionCount: Math.floor(Math.random() * 1000) + 10,
-            firstSeen: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        })
+        try {
+          const balance = await web3.eth.getBalance(searchQuery);
+          const transactionCount = await web3.eth.getTransactionCount(searchQuery);
+          
+          setSearchResults({
+            type: 'address',
+            data: {
+              address: searchQuery,
+              balance: web3.utils.fromWei(balance, 'ether'),
+              transactionCount: Number(transactionCount),
+              firstSeen: new Date().toISOString() // This isn't available from web3.js directly
+            }
+          });
+        } catch (error) {
+          console.error('Error searching address:', error);
+          toast.error('Failed to find address. Please check the address and try again.');
+        }
       }
       
       toast.success('Search completed!')
     } catch (error) {
-      toast.error('Search failed. Please try again.')
+      console.error('Search error:', error);
+      toast.error('Search failed. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -331,6 +428,14 @@ const BrainArkExplorer: React.FC = () => {
                   >
                     {loading ? 'Searching...' : 'Search'}
                   </button>
+                  <a 
+                    href="https://explorer.brainark.online"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 text-sm text-blue-400 hover:text-blue-300"
+                  >
+                    Advanced Search
+                  </a>
                 </div>
               </div>
 
@@ -564,10 +669,17 @@ const BrainArkExplorer: React.FC = () => {
             <span>•</span>
             <span>Chain ID: 424242</span>
             <span>•</span>
-            <span>Built with React & Web3</span>
+            <span>RPC: rpc.brainark.online</span>
+            <span>•</span>
+            <span>Explorer: explorer.brainark.online</span>
           </div>
           <p className="text-sm">
             Real-time blockchain data and analytics for the BrainArk ecosystem
+          </p>
+          <p className="text-xs mt-2">
+            <a href="https://explorer.brainark.online" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+              Visit full block explorer →
+            </a>
           </p>
         </div>
       </div>

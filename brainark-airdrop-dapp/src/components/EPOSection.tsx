@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
 import { toast } from 'react-hot-toast'
+import { ethers } from 'ethers'
 import { CurrencyDollarIcon, ChartBarIcon, ClockIcon } from '@heroicons/react/24/outline'
-import { EPO_CONFIG } from '@/utils/config'
+import { EPO_CONFIG, CONTRACT_ADDRESSES } from '@/utils/config'
+import { contractHelpers, parseContractError, waitForTransaction } from '@/utils/contracts'
 import AutoWalletConnection from './AutoWalletConnection'
 
 interface PaymentToken {
@@ -23,19 +25,24 @@ interface EPOData {
 
 export default function EPOSection() {
   const { address, isConnected } = useAccount()
+  const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
+  
   const [epoData, setEpoData] = useState<EPOData>({
-    totalSold: 2500000,
-    totalRaised: 50000,
-    remainingSupply: 97500000,
+    totalSold: 0,
+    totalRaised: 0,
+    remainingSupply: EPO_CONFIG.TOTAL_SUPPLY,
     isActive: true
   })
+  
+  const [loading, setLoading] = useState(true)
 
   const [selectedToken, setSelectedToken] = useState<PaymentToken>({
     symbol: 'ETH',
     name: 'Ethereum',
     address: '0x0000000000000000000000000000000000000000',
     decimals: 18,
-    price: 2000, // Mock price
+    price: 3000, // Current ETH price estimate
     icon: '⟠'
   })
 
@@ -47,15 +54,15 @@ export default function EPOSection() {
     {
       symbol: 'ETH',
       name: 'Ethereum',
-      address: '0x0000000000000000000000000000000000000000',
+      address: ethers.ZeroAddress,
       decimals: 18,
-      price: 2000,
+      price: 2000, // This will be updated from contract
       icon: '⟠'
     },
     {
       symbol: 'USDT',
       name: 'Tether USD',
-      address: '0x0000000000000000000000000000000000000000',
+      address: CONTRACT_ADDRESSES.USDT,
       decimals: 6,
       price: 1,
       icon: '₮'
@@ -63,7 +70,7 @@ export default function EPOSection() {
     {
       symbol: 'USDC',
       name: 'USD Coin',
-      address: '0x0000000000000000000000000000000000000000',
+      address: CONTRACT_ADDRESSES.USDC,
       decimals: 6,
       price: 1,
       icon: '◉'
@@ -71,26 +78,103 @@ export default function EPOSection() {
     {
       symbol: 'BNB',
       name: 'Binance Coin',
-      address: '0x0000000000000000000000000000000000000000',
+      address: CONTRACT_ADDRESSES.BNB,
       decimals: 18,
-      price: 300,
+      price: 300, // This will be updated from contract
       icon: '◆'
     }
   ]
 
   useEffect(() => {
+    if (publicClient) {
+      loadEpoData()
+      loadTokenPrices()
+    }
+  }, [publicClient])
+  
+  useEffect(() => {
     if (paymentAmount && !isNaN(Number(paymentAmount))) {
-      calculateBakAmount(Number(paymentAmount))
+      calculateBakAmountFromContract(Number(paymentAmount))
     } else {
       setBakAmount('')
     }
   }, [paymentAmount, selectedToken])
+  
+  const loadEpoData = async () => {
+    try {
+      setLoading(true)
+      // Get actual data from the contract
+      const stats = await contractHelpers.getEPOStats(publicClient)
+      setEpoData({
+        totalSold: Number(ethers.formatEther(stats.totalSold)),
+        totalRaised: Number(ethers.formatEther(stats.totalRaised)),
+        remainingSupply: EPO_CONFIG.TOTAL_SUPPLY - Number(ethers.formatEther(stats.totalSold)),
+        isActive: !stats.isPaused
+      })
+    } catch (error) {
+      console.error('Error loading EPO data:', error)
+      toast.error('Failed to load EPO data')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const loadTokenPrices = async () => {
+    try {
+      // Create a copy of the payment tokens array
+      const updatedTokens = [...paymentTokens]
+      
+      // Update each token with actual price from contract
+      for (let i = 0; i < updatedTokens.length; i++) {
+        try {
+          const tokenInfo = await contractHelpers.getPaymentTokenInfo(updatedTokens[i].address, publicClient)
+          if (tokenInfo) {
+            updatedTokens[i].price = Number(ethers.formatEther(tokenInfo.priceUSD))
+            updatedTokens[i].decimals = tokenInfo.decimals
+          }
+        } catch (err) {
+          console.error(`Error loading price for ${updatedTokens[i].symbol}:`, err)
+        }
+      }
+      
+      // Find and update selected token if it exists in the updated list
+      const updatedSelected = updatedTokens.find(token => token.symbol === selectedToken.symbol)
+      if (updatedSelected) {
+        setSelectedToken(updatedSelected)
+      }
+    } catch (error) {
+      console.error('Error loading token prices:', error)
+    }
+  }
 
   const calculateBakAmount = (amount: number) => {
     const usdValue = amount * selectedToken.price
-    // Use starting price for initial calculation, actual price determined by bonding curve
+    // Fallback calculation if contract call fails
     const bakTokens = usdValue / EPO_CONFIG.PRICE_START
     setBakAmount(bakTokens.toFixed(2))
+  }
+  
+  const calculateBakAmountFromContract = async (amount: number) => {
+    try {
+      if (!publicClient || amount <= 0) return
+      
+      // Convert to USD value based on token price
+      const usdValue = amount * selectedToken.price
+      
+      // Call contract to calculate based on bonding curve
+      const result = await contractHelpers.calculatePurchase(
+        selectedToken.address, 
+        usdValue.toString(), 
+        publicClient
+      )
+      
+      // Set BAK amount from contract calculation
+      setBakAmount(ethers.formatEther(result[0]))
+    } catch (error) {
+      console.error('Error calculating BAK amount:', error)
+      // Fallback to local calculation
+      calculateBakAmount(amount)
+    }
   }
 
   const handlePurchase = async () => {
@@ -113,32 +197,75 @@ export default function EPOSection() {
     setPurchasing(true)
 
     try {
-      // In a real implementation, this would call the smart contract
-      // For now, we'll simulate the transaction
-      await new Promise(resolve => setTimeout(resolve, 3000))
-
-      // Simulate successful purchase
-      const newTotalSold = epoData.totalSold + Number(bakAmount)
-      const newTotalRaised = epoData.totalRaised + (amount * selectedToken.price)
+      // Calculate minimum acceptable BAK amount (5% slippage tolerance)
+      const minBakAmount = (Number(bakAmount) * 0.95).toString()
       
-      setEpoData({
-        ...epoData,
-        totalSold: newTotalSold,
-        totalRaised: newTotalRaised,
-        remainingSupply: EPO_CONFIG.TOTAL_SUPPLY - newTotalSold
+      // If token is not ETH (zero address), need to approve first
+      if (selectedToken.address !== ethers.ZeroAddress) {
+        // Show approval toast
+        toast.loading('Please approve token spending in your wallet...', {
+          id: 'approval-toast'
+        })
+        
+        try {
+          // Create ERC20 contract
+          const erc20 = new ethers.Contract(
+            selectedToken.address,
+            ['function approve(address spender, uint256 amount) returns (bool)'],
+            walletClient
+          )
+          
+          // Approve EPO contract to spend tokens
+          const approvalTx = await erc20.approve(
+            CONTRACT_ADDRESSES.EPO,
+            ethers.parseUnits(paymentAmount, selectedToken.decimals)
+          )
+          
+          // Wait for approval transaction
+          await waitForTransaction(approvalTx.hash, publicClient)
+          
+          toast.success('Approval successful! Continuing with purchase...', {
+            id: 'approval-toast'
+          })
+        } catch (err) {
+          toast.error('Token approval failed', {
+            id: 'approval-toast'
+          })
+          throw err
+        }
+      }
+      
+      // Execute actual purchase via contract
+      const tx = await contractHelpers.purchaseBAK(
+        selectedToken.address,
+        paymentAmount,
+        minBakAmount,
+        walletClient
+      )
+      
+      toast.loading('Transaction submitted! Please wait for confirmation...', {
+        id: 'transaction-toast'
       })
-
+      
+      // Wait for transaction confirmation
+      const receipt = await waitForTransaction(tx.hash, publicClient)
+      
+      // Update EPO data
+      await loadEpoData()
+      
       // Save transaction data for success page
       const transactionData = {
         type: 'epo',
         amount: bakAmount,
         token: `${paymentAmount} ${selectedToken.symbol}`,
-        txHash: '0x' + Math.random().toString(16).substr(2, 64),
+        txHash: receipt.hash,
         timestamp: new Date().toISOString()
       }
       localStorage.setItem('lastTransaction', JSON.stringify(transactionData))
 
-      toast.success('Purchase successful!')
+      toast.success('Purchase successful!', {
+        id: 'transaction-toast'
+      })
       
       // Reset form
       setPaymentAmount('')
@@ -151,7 +278,10 @@ export default function EPOSection() {
 
     } catch (error) {
       console.error('Error purchasing tokens:', error)
-      toast.error('Purchase failed')
+      const errorMessage = parseContractError(error)
+      toast.error(`Purchase failed: ${errorMessage}`, {
+        id: 'transaction-toast'
+      })
     } finally {
       setPurchasing(false)
     }
@@ -190,8 +320,16 @@ export default function EPOSection() {
           </p>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-brainark-500 mx-auto mb-4"></div>
+            <p className="text-xl text-gray-600 dark:text-gray-300">Loading EPO data from blockchain...</p>
+          </div>
+        )}
+
         {/* EPO Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className={`grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 ${loading ? 'opacity-50' : ''}`}>
           <div className="card text-center">
             <CurrencyDollarIcon className="h-8 w-8 text-brainark-500 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-brainark-500 mb-1">

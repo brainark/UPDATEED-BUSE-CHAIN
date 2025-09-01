@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useAccount, usePublicClient, useWalletClient, useChainId } from 'wagmi'
 import { toast } from 'react-hot-toast'
-import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { ethers } from 'ethers'
+import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { SOCIAL_LINKS, AIRDROP_CONFIG } from '@/utils/config'
+import { contractHelpers, parseContractError, waitForTransaction } from '@/utils/contracts'
+import { ensureBrainArkNetwork } from '@/utils/networkSwitcher'
+import { brainarkChain } from '@/utils/wagmiConfig'
 import AutoWalletConnection from './AutoWalletConnection'
 
 interface SocialTask {
@@ -26,7 +31,16 @@ interface AirdropSectionProps {
   walletAddress?: string
 }
 
-export default function AirdropSection({ isConnected = false, walletAddress = '' }: AirdropSectionProps) {
+export default function AirdropSection() {
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
+  const [loading, setLoading] = useState(true)
+  const [networkChecking, setNetworkChecking] = useState(false)
+  
+  const isOnBrainArkNetwork = chainId === brainarkChain.id
+  
   const [airdropData, setAirdropData] = useState<AirdropData>({
     hasClaimed: false,
     canClaim: false,
@@ -62,33 +76,108 @@ export default function AirdropSection({ isConnected = false, walletAddress = ''
   const [referralCode, setReferralCode] = useState('')
   const [claiming, setClaiming] = useState(false)
   const [timeUntilDistribution, setTimeUntilDistribution] = useState(0)
+  const [airdropStats, setAirdropStats] = useState({
+    totalParticipants: 0,
+    totalClaimed: 0,
+    totalReferralBonuses: 0,
+    remainingSupply: AIRDROP_CONFIG.TOTAL_SUPPLY,
+    distributionActive: false,
+    distributionStartTime: 0
+  })
 
   useEffect(() => {
-    if (isConnected && walletAddress) {
+    if (publicClient) {
+      loadAirdropStats()
+    }
+  }, [publicClient])
+  
+  useEffect(() => {
+    if (isConnected && address) {
       loadAirdropData()
     }
-  }, [isConnected, walletAddress])
+  }, [isConnected, address])
 
+  const loadAirdropStats = async () => {
+    try {
+      setLoading(true)
+      const stats = await contractHelpers.getAirdropStats(publicClient)
+      
+      setAirdropStats({
+        totalParticipants: Number(stats.totalParticipants),
+        totalClaimed: Number(ethers.formatEther(stats.totalClaimed)),
+        totalReferralBonuses: Number(ethers.formatEther(stats.totalReferralBonuses)),
+        remainingSupply: Number(ethers.formatEther(stats.remainingSupply)),
+        distributionActive: stats.distributionActive,
+        distributionStartTime: Number(stats.distributionStartTime)
+      })
+      
+      // Also check for time until distribution
+      const timeRemaining = await contractHelpers.getTimeUntilDistribution(publicClient)
+      setTimeUntilDistribution(Number(timeRemaining))
+    } catch (error) {
+      console.error('Error loading airdrop stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
   const loadAirdropData = async () => {
     try {
-      // In a real implementation, this would fetch from the smart contract
-      // For now, we'll simulate the data
-      const mockData = {
-        hasClaimed: false,
-        canClaim: false, // Will be true when all social tasks are completed
-        referralCount: 0,
-        totalEarned: 0,
-        socialTasks: airdropData.socialTasks
-      }
+      setLoading(true)
       
-      setAirdropData(mockData)
+      // Get user info from contract
+      const userInfo = await contractHelpers.getAirdropUserInfo(address, publicClient)
+      
+      // Check if user can claim
+      const canClaim = await contractHelpers.canClaimAirdrop(address, publicClient)
+      
+      // Set updated data
+      setAirdropData({
+        hasClaimed: userInfo.hasClaimed,
+        canClaim: canClaim,
+        referralCount: Number(userInfo.referralCount),
+        totalEarned: Number(ethers.formatEther(userInfo.totalEarned)),
+        socialTasks: [
+          {
+            id: 'twitter_follow',
+            name: 'Follow on Twitter',
+            description: 'Follow @sdogcoin1 on Twitter',
+            completed: userInfo.twitterFollowed,
+            verifying: false,
+            link: SOCIAL_LINKS.TWITTER
+          },
+          {
+            id: 'twitter_retweet',
+            name: 'Retweet Pinned Post',
+            description: 'Retweet our pinned post',
+            completed: userInfo.twitterRetweeted,
+            verifying: false,
+            link: SOCIAL_LINKS.TWITTER
+          },
+          {
+            id: 'telegram_join',
+            name: 'Join Telegram',
+            description: 'Join our Telegram channel',
+            completed: userInfo.telegramJoined,
+            verifying: false,
+            link: SOCIAL_LINKS.TELEGRAM
+          }
+        ]
+      })
     } catch (error) {
       console.error('Error loading airdrop data:', error)
       toast.error('Failed to load airdrop data')
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleSocialTask = async (taskId: string) => {
+    if (!isConnected || !address) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+    
     const taskIndex = airdropData.socialTasks.findIndex(task => task.id === taskId)
     if (taskIndex === -1) return
 
@@ -101,12 +190,15 @@ export default function AirdropSection({ isConnected = false, walletAddress = ''
       // Open the social link
       const task = airdropData.socialTasks[taskIndex]
       window.open(task.link, '_blank')
-
-      // Simulate verification process
+      
+      // In a production scenario, there would be a backend service verifying social tasks
+      // For now, we'll simulate the verification delay
       await new Promise(resolve => setTimeout(resolve, 3000))
-
-      // In a real implementation, this would call the backend API to verify the task
-      // For now, we'll simulate successful verification
+      
+      // In real implementation, the backend would call this from a verifier address:
+      // await contractHelpers.verifySocialTask(address, taskId, true, verifierSigner)
+      
+      // For demo purposes, simulate successful verification
       updatedTasks[taskIndex].completed = true
       updatedTasks[taskIndex].verifying = false
       
@@ -126,7 +218,7 @@ export default function AirdropSection({ isConnected = false, walletAddress = ''
   }
 
   const handleClaimAirdrop = async () => {
-    if (!isConnected || !walletAddress) {
+    if (!isConnected || !address) {
       toast.error('Please connect your wallet first')
       return
     }
@@ -139,22 +231,22 @@ export default function AirdropSection({ isConnected = false, walletAddress = ''
     setClaiming(true)
 
     try {
-      // In a real implementation, this would call the smart contract
-      // For now, we'll simulate the transaction
-      await new Promise(resolve => setTimeout(resolve, 3000))
-
-      // Simulate successful claim
-      setAirdropData({
-        ...airdropData,
-        hasClaimed: true,
-        totalEarned: AIRDROP_CONFIG.COINS_PER_USER
-      })
-
+      // Call the actual contract to claim the airdrop
+      // Pass null or empty string if no referrer
+      const referrer = '0x0000000000000000000000000000000000000000' // No referrer
+      const tx = await contractHelpers.claimAirdrop(referrer, walletClient)
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait()
+      
+      // Update the UI with actual claim data
+      await loadAirdropData()
+      
       // Save transaction data for success page
       const transactionData = {
         type: 'airdrop',
         amount: AIRDROP_CONFIG.COINS_PER_USER,
-        txHash: '0x' + Math.random().toString(16).substr(2, 64),
+        txHash: receipt.transactionHash,
         timestamp: new Date().toISOString()
       }
       localStorage.setItem('lastTransaction', JSON.stringify(transactionData))
@@ -175,8 +267,8 @@ export default function AirdropSection({ isConnected = false, walletAddress = ''
   }
 
   const generateReferralLink = () => {
-    if (!walletAddress) return ''
-    return `${window.location.origin}/airdrop?ref=${walletAddress}`
+    if (!address) return ''
+    return `${window.location.origin}/airdrop?ref=${address}`
   }
 
   const copyReferralLink = () => {

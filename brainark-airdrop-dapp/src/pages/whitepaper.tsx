@@ -46,7 +46,7 @@ export default function WhitepaperPage() {
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                       The official BrainArk whitepaper will be uploaded here soon. 
-                      It will contain detailed information about our technology, tokenomics, and roadmap.
+                      It will contain detailed information about our technology, native coin economics, and roadmap.
                     </p>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       Expected release: Q1 2024
@@ -122,15 +122,15 @@ export default function WhitepaperPage() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-brainark-500 mr-2">•</span>
-                      10M BAK token airdrop with referral system
+                      10M BAK native coin airdrop with referral system
                     </li>
                     <li className="flex items-start">
                       <span className="text-brainark-500 mr-2">•</span>
-                      Early Public Offering (EPO) at $0.02 per token
+                      Early Public Offering (EPO) at $0.02 per native coin
                     </li>
                     <li className="flex items-start">
                       <span className="text-brainark-500 mr-2">•</span>
-                      Multi-token payment support (ETH, USDT, USDC, BNB)
+                      Multi-cryptocurrency payment support (ETH, USDT, USDC, BNB)
                     </li>
                   </ul>
                 </div>
@@ -196,7 +196,7 @@ export default function WhitepaperPage() {
                     EPO Information
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    Understand the Early Public Offering and how to purchase BAK tokens.
+                    Understand the Early Public Offering and how to purchase BAK native coins.
                   </p>
                   <Link href="/epo" className="btn-outline text-sm">
                     Learn More

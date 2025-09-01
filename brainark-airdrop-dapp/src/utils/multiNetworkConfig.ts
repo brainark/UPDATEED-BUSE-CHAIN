@@ -38,7 +38,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     chainId: 1,
     chainIdHex: '0x1',
     name: 'Ethereum Mainnet',
-    rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
+    rpcUrl: process.env.ETHEREUM_RPC_URL || 'https://ethereum-rpc.publicnode.com',
     nativeCurrency: {
       name: 'Ethereum',
       symbol: 'ETH',
@@ -50,7 +50,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     chainId: 56,
     chainIdHex: '0x38',
     name: 'BSC Mainnet',
-    rpcUrl: process.env.BSC_RPC_URL || 'https://bsc-dataseed1.binance.org/',
+    rpcUrl: process.env.BSC_RPC_URL || 'https://bsc-rpc.publicnode.com',
     nativeCurrency: {
       name: 'BNB',
       symbol: 'BNB',
@@ -62,7 +62,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     chainId: 137,
     chainIdHex: '0x89',
     name: 'Polygon Mainnet',
-    rpcUrl: process.env.POLYGON_RPC_URL || 'https://polygon-rpc.com/',
+    rpcUrl: process.env.POLYGON_RPC_URL || 'https://polygon-bor-rpc.publicnode.com',
     nativeCurrency: {
       name: 'MATIC',
       symbol: 'MATIC',
@@ -76,7 +76,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     name: 'BrainArk Network',
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.brainark.online',
     nativeCurrency: {
-      name: 'BrainArk Token',
+      name: 'BrainArk Native Coin',
       symbol: 'BAK',
       decimals: 18
     },
@@ -111,7 +111,7 @@ export const PAYMENT_TOKENS: TokenConfig[] = [
     symbol: 'USDC',
     name: 'USD Coin (Ethereum)',
     decimals: 6,
-    contractAddress: process.env.USDC_ETHEREUM_CONTRACT || '0xA0b86a33E6441b8C4505B8C4505B8C4505B8C4505',
+    contractAddress: process.env.USDC_ETHEREUM_CONTRACT || '0xA0b86a33E6441E2EbA2714d3079559c00c35DFD0',
     treasuryAddress: process.env.NEXT_PUBLIC_USDC_ETHEREUM_TREASURY || '0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145',
     icon: '🔵',
     network: 'ethereum',
@@ -214,20 +214,99 @@ export const getBrainArkNetwork = (): NetworkConfig => {
   return NETWORKS.brainark
 }
 
-// Token Price Configuration (in USD) - Update these with real-time prices
-export const TOKEN_PRICES: Record<string, number> = {
-  ETH: 2000, // $2000 per ETH (update with real-time prices)
-  BNB: 300,  // $300 per BNB
-  MATIC: 0.8, // $0.8 per MATIC
-  USDT: 1,   // $1 per USDT
-  USDC: 1    // $1 per USDC
+// Token Price Configuration (in USD) - Default fallback prices
+export const DEFAULT_TOKEN_PRICES: Record<string, number> = {
+  ETH: 2000, // Fallback price
+  BNB: 300,  // Fallback price
+  MATIC: 0.8, // Fallback price
+  USDT: 1,   // Stable
+  USDC: 1    // Stable
+}
+
+// Current token prices (updated automatically)
+export let TOKEN_PRICES: Record<string, number> = { ...DEFAULT_TOKEN_PRICES }
+
+// Fetch real-time token prices from CoinGecko API with better error handling
+export const fetchTokenPrices = async (): Promise<Record<string, number>> => {
+  try {
+    // Create abort controller for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 12000) // 12 second timeout
+    
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,matic-network,tether,usd-coin&vs_currencies=usd',
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: controller.signal
+      }
+    )
+    
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    
+    const updatedPrices = {
+      ETH: data.ethereum?.usd || DEFAULT_TOKEN_PRICES.ETH,
+      BNB: data.binancecoin?.usd || DEFAULT_TOKEN_PRICES.BNB,
+      MATIC: data['matic-network']?.usd || DEFAULT_TOKEN_PRICES.MATIC,
+      USDT: data.tether?.usd || DEFAULT_TOKEN_PRICES.USDT,
+      USDC: data['usd-coin']?.usd || DEFAULT_TOKEN_PRICES.USDC
+    }
+
+    // Update global TOKEN_PRICES
+    TOKEN_PRICES = updatedPrices
+    
+    console.log('Token prices updated:', updatedPrices)
+    return updatedPrices
+
+  } catch (error) {
+    console.error('Error fetching token prices:', error)
+    console.log('Using fallback token prices')
+    TOKEN_PRICES = { ...DEFAULT_TOKEN_PRICES }
+    return DEFAULT_TOKEN_PRICES
+  }
+}
+
+// Auto-update token prices every 5 minutes
+let priceUpdateInterval: NodeJS.Timeout | null = null
+
+export const startTokenPriceUpdates = () => {
+  // Initial fetch
+  fetchTokenPrices()
+  
+  // Set up interval for updates (5 minutes)
+  if (priceUpdateInterval) {
+    clearInterval(priceUpdateInterval)
+  }
+  
+  priceUpdateInterval = setInterval(() => {
+    fetchTokenPrices()
+  }, 5 * 60 * 1000) // 5 minutes
+}
+
+export const stopTokenPriceUpdates = () => {
+  if (priceUpdateInterval) {
+    clearInterval(priceUpdateInterval)
+    priceUpdateInterval = null
+  }
+}
+
+// Get current token price with automatic fallback
+export const getTokenPrice = (symbol: string): number => {
+  return TOKEN_PRICES[symbol] || DEFAULT_TOKEN_PRICES[symbol] || 1
 }
 
 // BAK Token Configuration
 export const BAK_CONFIG = {
   priceUSD: 0.02, // $0.02 per BAK
   symbol: 'BAK',
-  name: 'BrainArk Token',
+  name: 'BrainArk Native Coin',
   decimals: 18,
   distributionAddress: process.env.NEXT_PUBLIC_BAK_BRAINARK_TREASURY || '0xC7A3e128f909153442D931BA430AC9aA55E9370D'
 }

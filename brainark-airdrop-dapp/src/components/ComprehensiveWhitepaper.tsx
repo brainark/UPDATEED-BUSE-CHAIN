@@ -308,51 +308,191 @@ export default function ComprehensiveWhitepaper() {
             </div>
           </div>
 
-          {/* Economic Model */}
+          {/* Economic Model & Tokenomics */}
           <div className="card-brilliant p-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">6. Economic Model</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">6. Economic Model & Tokenomics</h2>
             
-            <div className="space-y-6">
+            <div className="space-y-8">
+              {/* Token Specifications */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.1 BAK Tokenomics</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.1 BAK Token Specifications</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-3">
                     <div><strong>Token Name:</strong> BrainArk (BAK)</div>
-                    <div><strong>Total Supply:</strong> 1,000,000,000 BAK</div>
-                    <div><strong>Max Supply:</strong> 1,000,000,000 BAK (Fixed, no inflation)</div>
+                    <div><strong>Token Standard:</strong> ERC-20 Compatible</div>
+                    <div><strong>Total Supply:</strong> 1,000,000,000 BAK (Fixed)</div>
+                    <div><strong>Circulating at Launch:</strong> 600,000,000 BAK</div>
                     <div><strong>Decimals:</strong> 18</div>
+                  </div>
+                  <div className="space-y-3">
                     <div><strong>Initial Price:</strong> $0.02 USD</div>
+                    <div><strong>Network:</strong> BrainArk Besu Chain</div>
+                    <div><strong>Chain ID:</strong> 424242</div>
+                    <div><strong>Time-Locked:</strong> 400,000,000 BAK (30 years)</div>
+                    <div><strong>Annual Release:</strong> 13,333,333 BAK</div>
                   </div>
                 </div>
+              </div>
 
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">Distribution Model</h4>
-                  <div className="text-gray-800 font-mono text-sm space-y-1">
-                    <div>Network Operations: 985,000,000 BAK (98.5%)</div>
-                    <div className="ml-4">├── Validator Rewards: 500,000,000 BAK (50%)</div>
+              {/* Token Distribution */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.2 Token Distribution Model</h3>
+                <div className="bg-gray-100 p-6 rounded-lg mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-4">Primary Allocation (1,000,000,000 BAK Total)</h4>
+                  <div className="text-gray-800 font-mono text-sm space-y-2">
+                    <div className="font-bold">Network Operations: 985,000,000 BAK (98.5%)</div>
+                    <div className="ml-4">├── Validator Rewards Pool: 500,000,000 BAK (50%)</div>
+                    <div className="ml-8">│   ├── Active Circulation: 100,000,000 BAK (10%)</div>
+                    <div className="ml-8 text-blue-700 font-semibold">│   └── Time-Locked Reserve: 400,000,000 BAK (40%)</div>
                     <div className="ml-4">├── Development Fund: 300,000,000 BAK (30%)</div>
                     <div className="ml-4">├── Ecosystem Growth: 150,000,000 BAK (15%)</div>
-                    <div className="ml-4">└── Reserve Fund: 35,000,000 BAK (3.5%)</div>
-                    <div className="mt-2">Community Distribution: 15,000,000 BAK (1.5%)</div>
+                    <div className="ml-4">└── Strategic Reserve: 35,000,000 BAK (3.5%)</div>
+                    <div className="mt-3 font-bold">Community Distribution: 15,000,000 BAK (1.5%)</div>
                     <div className="ml-4">├── Airdrop Program: 10,000,000 BAK (1%)</div>
                     <div className="ml-4">└── Referral Rewards: 5,000,000 BAK (0.5%)</div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.2 Fee Structure</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div><strong>Base Gas Price:</strong> 1,000 wei (0.000000001 BAK)</div>
-                    <div><strong>Priority Fee:</strong> 0-500 wei (optional)</div>
-                    <div><strong>Maximum Gas Price:</strong> 10,000 wei (emergency)</div>
-                    <div><strong>Fee Predictability:</strong> 99.9% use base price</div>
+              {/* Time-Lock Mechanism */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <h3 className="text-xl font-semibold text-blue-900 mb-4">6.3 Validator Reward Time-Lock Mechanism</h3>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-blue-800 mb-2">🔒 Long-Term Supply Control System</h4>
+                    <p className="text-blue-700 mb-4">
+                      <strong>Objective:</strong> Ensure long-term network stability and controlled token inflation through a sophisticated time-lock mechanism.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white p-4 rounded-lg">
+                        <h5 className="font-semibold text-blue-900 mb-2">Time-Lock Parameters</h5>
+                        <div className="space-y-2 text-sm">
+                          <div><strong>Total Validator Pool:</strong> 500,000,000 BAK</div>
+                          <div><strong>Immediate Circulation:</strong> 100,000,000 BAK</div>
+                          <div><strong>Time-Locked Reserve:</strong> 400,000,000 BAK</div>
+                          <div><strong>Lock Duration:</strong> 30 years</div>
+                          <div><strong>Annual Release:</strong> 13,333,333 BAK</div>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg">
+                        <h5 className="font-semibold text-blue-900 mb-2">Release Schedule</h5>
+                        <div className="space-y-2 text-sm">
+                          <div><strong>Monthly Release:</strong> 1,111,111 BAK</div>
+                          <div><strong>Daily Release:</strong> ~36,496 BAK</div>
+                          <div><strong>Per Block:</strong> ~18.25 BAK (2-sec blocks)</div>
+                          <div><strong>Contract Type:</strong> Immutable time-lock</div>
+                          <div><strong>Release Method:</strong> Automated</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    <div><strong>Validator Rewards:</strong> 70% of transaction fees</div>
-                    <div><strong>Network Development:</strong> 20% of transaction fees</div>
-                    <div><strong>Burn Mechanism:</strong> 10% of transaction fees</div>
+
+                  <div className="bg-white p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-3">📊 Circulation Control Benefits</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ul className="space-y-2 text-blue-800 text-sm">
+                        <li><strong>✓ Predictable Inflation:</strong> Fixed 1.33% annual increase</li>
+                        <li><strong>✓ Long-term Stability:</strong> 30-year network commitment</li>
+                        <li><strong>✓ Validator Sustainability:</strong> Guaranteed rewards</li>
+                      </ul>
+                      <ul className="space-y-2 text-blue-800 text-sm">
+                        <li><strong>✓ Market Confidence:</strong> Transparent release schedule</li>
+                        <li><strong>✓ Deflationary Pressure:</strong> Burn mechanism counteracts inflation</li>
+                        <li><strong>✓ Supply Scarcity:</strong> 40% locked for three decades</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fee Structure */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.4 Fee Structure & Economic Incentives</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-green-900 mb-3">Transaction Fee Model</h4>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Base Gas Price:</strong> 1,000 wei (0.000000001 BAK)</div>
+                      <div><strong>Priority Fee:</strong> 0-500 wei (optional fast lane)</div>
+                      <div><strong>Maximum Gas Price:</strong> 10,000 wei (congestion protection)</div>
+                      <div><strong>Average Cost:</strong> ~$0.00001 USD (99% cheaper than Ethereum)</div>
+                      <div><strong>Fee Predictability:</strong> 99.9% use base price</div>
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-3">Fee Distribution</h4>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Validator Rewards:</strong> 70% (Network security)</div>
+                      <div><strong>Development Fund:</strong> 20% (Continuous improvement)</div>
+                      <div><strong>Burn Mechanism:</strong> 10% (Deflationary pressure)</div>
+                    </div>
+                    <div className="mt-4 p-3 bg-white rounded border">
+                      <div className="text-xs text-purple-700">
+                        <strong>Economic Impact:</strong> Self-sustaining ecosystem growth with gradual supply reduction over time.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Circulation Dynamics */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">6.5 Long-Term Supply Projection</h3>
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-4">Year-by-Year Circulation Increase</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+                    <div className="bg-white p-3 rounded text-center">
+                      <div className="font-bold text-blue-600">Year 1</div>
+                      <div>613.3M BAK</div>
+                    </div>
+                    <div className="bg-white p-3 rounded text-center">
+                      <div className="font-bold text-blue-600">Year 5</div>
+                      <div>666.7M BAK</div>
+                    </div>
+                    <div className="bg-white p-3 rounded text-center">
+                      <div className="font-bold text-blue-600">Year 10</div>
+                      <div>733.3M BAK</div>
+                    </div>
+                    <div className="bg-white p-3 rounded text-center">
+                      <div className="font-bold text-blue-600">Year 20</div>
+                      <div>866.7M BAK</div>
+                    </div>
+                    <div className="bg-white p-3 rounded text-center">
+                      <div className="font-bold text-blue-600">Year 25</div>
+                      <div>933.3M BAK</div>
+                    </div>
+                    <div className="bg-white p-3 rounded text-center border-2 border-green-500">
+                      <div className="font-bold text-green-600">Year 30</div>
+                      <div>1B BAK</div>
+                      <div className="text-xs text-green-600">Full Supply</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Economic Security */}
+              <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                <h3 className="text-xl font-semibold text-yellow-900 mb-4">6.6 Economic Security Model</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 mb-3">Value Drivers</h4>
+                    <ul className="space-y-2 text-yellow-800 text-sm">
+                      <li><strong>• Transaction Demand:</strong> Higher usage increases validator rewards</li>
+                      <li><strong>• Staking Requirements:</strong> Validators must hold BAK for consensus</li>
+                      <li><strong>• Fee Burn:</strong> Gradual supply reduction creates scarcity</li>
+                      <li><strong>• Ecosystem Growth:</strong> dApps and services increase utility demand</li>
+                      <li><strong>• Time-Lock Scarcity:</strong> 40% of supply locked for 30 years</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 mb-3">Risk Mitigation</h4>
+                    <ul className="space-y-2 text-yellow-800 text-sm">
+                      <li><strong>• Gradual Release:</strong> Prevents supply shocks</li>
+                      <li><strong>• Burn Mechanism:</strong> Counteracts inflation pressure</li>
+                      <li><strong>• Validator Alignment:</strong> Long-term commitment required</li>
+                      <li><strong>• Fee Stability:</strong> Predictable transaction costs</li>
+                      <li><strong>• Reserve Management:</strong> Strategic fund for crisis scenarios</li>
+                    </ul>
                   </div>
                 </div>
               </div>

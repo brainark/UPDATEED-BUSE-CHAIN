@@ -4,6 +4,7 @@ import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTria
 import { SOCIAL_LINKS, AIRDROP_CONFIG } from '@/utils/config'
 import AutoWalletConnection from './AutoWalletConnection'
 import { useAppwrite } from '@/hooks/useAppwrite'
+import { AirdropShaderBackground } from './shaders'
 
 interface SocialTask {
   id: string
@@ -161,11 +162,49 @@ export default function AutoDistributionAirdropWithAppwrite() {
     setLocalSocialTasks(updatedTasks)
 
     try {
-      // Simulate verification process (2-3 seconds)
-      await new Promise(resolve => setTimeout(resolve, 2500))
+      // Call real verification API
+      let verified = false
+      let verificationResponse: any
 
-      // Mock verification result (80% success rate for demo)
-      const verified = Math.random() > 0.2
+      if (taskId === 'twitter_follow') {
+        // Ask user for their Twitter username
+        const username = prompt('Please enter your Twitter/X username (without @):')
+        if (!username) {
+          throw new Error('Twitter username is required for verification')
+        }
+
+        // Call Twitter verification API
+        const response = await fetch('/api/verify-twitter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: address,
+            username: username.replace('@', ''),
+            taskType: 'follow'
+          })
+        })
+        verificationResponse = await response.json()
+        verified = verificationResponse.verified
+
+      } else if (taskId === 'telegram_join') {
+        // Ask user for their Telegram username
+        const username = prompt('Please enter your Telegram username (without @):')
+        if (!username) {
+          throw new Error('Telegram username is required for verification')
+        }
+
+        // Call Telegram verification API
+        const response = await fetch('/api/verify-telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address: address,
+            username: username.replace('@', '')
+          })
+        })
+        verificationResponse = await response.json()
+        verified = verificationResponse.verified
+      }
 
       if (verified) {
         // Update in database
@@ -177,6 +216,8 @@ export default function AutoDistributionAirdropWithAppwrite() {
           updatedTasks[taskIndex].verifying = false
           setLocalSocialTasks(updatedTasks)
 
+          toast.success(`✅ ${updatedTasks[taskIndex].name} verified successfully!`)
+
           // Check if all tasks are completed
           const allCompleted = updatedTasks.every(task => task.completed)
           if (allCompleted) {
@@ -186,17 +227,19 @@ export default function AutoDistributionAirdropWithAppwrite() {
         } else {
           updatedTasks[taskIndex].verifying = false
           setLocalSocialTasks(updatedTasks)
+          toast.error('Failed to save verification. Please try again.')
         }
       } else {
         updatedTasks[taskIndex].verifying = false
         setLocalSocialTasks(updatedTasks)
-        toast.error(`Verification failed for ${updatedTasks[taskIndex].name}. Please try again.`)
+        const message = verificationResponse?.message || `Verification failed for ${updatedTasks[taskIndex].name}. Please ensure you've completed the task and try again.`
+        toast.error(message)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error verifying social task:', error)
       updatedTasks[taskIndex].verifying = false
       setLocalSocialTasks(updatedTasks)
-      toast.error('Verification failed. Please try again.')
+      toast.error(error.message || 'Verification failed. Please try again.')
     }
   }
 
@@ -314,8 +357,10 @@ export default function AutoDistributionAirdropWithAppwrite() {
   }
 
   return (
-    <section className="min-h-screen bg-deep-black py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-deep-black py-12 relative">
+      {/* Shader Background */}
+      <AirdropShaderBackground />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent">

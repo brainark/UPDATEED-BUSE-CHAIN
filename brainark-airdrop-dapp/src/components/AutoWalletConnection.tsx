@@ -40,6 +40,8 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
   const [isConnecting, setIsConnecting] = useState(false)
   const [isNetworkAction, setIsNetworkAction] = useState(false)
   const [error, setError] = useState<string>('')
+  const [showNetworkPrompt, setShowNetworkPrompt] = useState(false)
+  const [autoSwitchAttempted, setAutoSwitchAttempted] = useState(false)
   
   // Use refs to prevent infinite loops
   const providerRef = useRef<any>(null)
@@ -214,6 +216,7 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
     }
   }, [])
 
+  // Auto-switch network after successful connection
   // Add/Switch network with improved error handling
   const addNetwork = useCallback(async () => {
     const provider = getProvider()
@@ -275,7 +278,7 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
       } else if (error.message?.includes('same RPC endpoint')) {
         setError('Network conflict detected. Please remove conflicting networks from MetaMask.')
       } else {
-        setError('Failed to add network. Please try again.')
+        setError(`Failed to add network: ${error.message || 'Unknown error'}`)
       }
       return false
     } finally {
@@ -283,6 +286,15 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
       pendingRequestRef.current = false
     }
   }, [getProvider, networkConfig, testNetworkConnectivity])
+
+  const autoSwitchNetwork = useCallback(async () => {
+    setShowNetworkPrompt(false)
+    const success = await addNetwork()
+    if (success) {
+      // Show success message briefly
+      setError('')
+    }
+  }, [addNetwork])
 
   // Connect to MetaMask
   const connect = useCallback(async () => {
@@ -311,6 +323,13 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
       setIsConnected(true)
       setAddress(accounts[0])
       await checkNetwork()
+      
+      // Auto-prompt network switch after connection if on wrong network
+      const chainId = await provider.request({ method: 'eth_chainId' })
+      if (chainId !== networkConfig.chainIdHex && !autoSwitchAttempted) {
+        setShowNetworkPrompt(true)
+        setAutoSwitchAttempted(true)
+      }
 
     } catch (error: any) {
       console.error('Connection failed:', error)
@@ -397,9 +416,59 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
     )
   }
 
+  // Render network prompt modal
+  if (showNetworkPrompt && isConnected && !isCorrectNetwork) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowNetworkPrompt(false)}>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md mx-4" onClick={e => e.stopPropagation()}>
+          <div className="text-center mb-4">
+            <div className="text-4xl mb-2">🌐</div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              Switch to BrainArk Network?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              You're connected to the wrong network. Switch to BrainArk Network to use all features.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={autoSwitchNetwork}
+              disabled={isNetworkAction}
+              className="flex-1 bg-brainark-500 hover:bg-brainark-600 disabled:bg-brainark-300 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              {isNetworkAction ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Switching...
+                </>
+              ) : (
+                'Yes, Switch Network'
+              )}
+            </button>
+            <button
+              onClick={() => setShowNetworkPrompt(false)}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Maybe Later
+            </button>
+          </div>
+          {error && (
+            <div className="mt-3 text-xs text-red-600 bg-red-50 dark:bg-red-900 px-2 py-1 rounded">
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   // Render wrong network state
-  if (!isCorrectNetwork) {
+  if (!isCorrectNetwork && isConnected) {
     const currentChainIdDecimal = parseInt(currentChainId, 16)
+    const networkName = currentChainIdDecimal === 1 ? 'Ethereum' : 
+                       currentChainIdDecimal === 56 ? 'BSC' : 
+                       currentChainIdDecimal === 137 ? 'Polygon' : 
+                       `Chain ${currentChainIdDecimal}`
     
     return (
       <div className="flex flex-col gap-2">
@@ -415,12 +484,12 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
             </>
           ) : (
             <>
-              ⚠️ Switch to BrainArk
+              🌐 Switch to BrainArk
             </>
           )}
         </button>
         <div className="text-xs text-yellow-700 bg-yellow-50 px-2 py-1 rounded">
-          Current: Chain {currentChainIdDecimal} | Need: Chain {networkConfig.chainId}
+          Current: {networkName} | Need: BrainArk Network
         </div>
         {error && (
           <div className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
@@ -438,12 +507,12 @@ export default function AutoWalletConnection({ onConnectionChange }: AutoWalletC
         <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
         {formatAddress(address)}
       </div>
-      <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-        {networkType === 'local' ? '🔧 Local' : '🌐 Prod'}
+      <div className="text-xs text-green-600 bg-green-50 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded">
+        {networkType === 'local' ? '🔧 Local' : '🌐 BrainArk'}
       </div>
       <button
         onClick={disconnect}
-        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
         title="Disconnect wallet"
       >
         ✕

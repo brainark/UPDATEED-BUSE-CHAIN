@@ -12,6 +12,20 @@ interface TreasuryBalance {
   error?: string
 }
 
+interface Transaction {
+  hash: string
+  from: string
+  to: string
+  value: string
+  token: string
+  network: string
+  timestamp: string
+  type: 'airdrop' | 'epo' | 'general'
+  status: 'success' | 'failed' | 'pending'
+  gasUsed?: string
+  usdValue: number
+}
+
 interface AdminAuth {
   isAuthenticated: boolean
   adminAddress: string | null
@@ -25,9 +39,12 @@ const AdminTreasuryDashboard: React.FC = () => {
     isOwner: false
   })
   const [treasuryBalances, setTreasuryBalances] = useState<TreasuryBalance[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'balances' | 'transactions'>('overview')
 
   // Admin/Owner addresses - these should be stored securely
   const AUTHORIZED_ADDRESSES = [
@@ -153,11 +170,108 @@ const AdminTreasuryDashboard: React.FC = () => {
     }
   }
 
-  // Auto-refresh balances every 5 minutes
+  // Fetch recent transactions to treasury addresses (airdrop and EPO payments)
+  const fetchRecentTransactions = async () => {
+    if (!auth.isAuthenticated) return
+
+    setIsLoadingTransactions(true)
+    
+    try {
+      const transactions: Transaction[] = []
+      const tokenPrices: Record<string, number> = {
+        ETH: 2000, BNB: 300, MATIC: 0.8, USDT: 1, USDC: 1
+      }
+
+      // Get transactions for each treasury address
+      for (const token of PAYMENT_TOKENS.slice(0, 3)) { // Limit to first 3 for demo
+        try {
+          const network = NETWORKS[token.network]
+          const provider = new ethers.JsonRpcProvider(network.rpcUrl)
+          
+          // Get the latest block
+          const latestBlock = await provider.getBlockNumber()
+          const blocksToCheck = Math.min(100, latestBlock) // Check last 100 blocks
+          
+          // Check recent blocks for transactions to treasury addresses
+          for (let i = 0; i < blocksToCheck && transactions.length < 20; i++) {
+            const blockNumber = latestBlock - i
+            const block = await provider.getBlock(blockNumber, true)
+            
+            if (block && block.transactions) {
+              for (const txHash of block.transactions.slice(0, 10)) { // Limit transactions per block
+                try {
+                  const tx = await provider.getTransaction(txHash as string)
+                  if (!tx) continue
+                  
+                  // Check if transaction is to our treasury address
+                  if (tx.to?.toLowerCase() === token.treasuryAddress.toLowerCase()) {
+                    const receipt = await provider.getTransactionReceipt(txHash as string)
+                    
+                    let value = '0'
+                    if (token.contractAddress === '0x0000000000000000000000000000000000000000') {
+                      // Native token
+                      value = ethers.formatEther(tx.value || '0')
+                    } else {
+                      // ERC20 token - would need to parse logs for actual value
+                      value = '0' // Simplified for demo
+                    }
+                    
+                    const usdValue = parseFloat(value) * (tokenPrices[token.symbol] || 1)
+                    
+                    // Determine transaction type based on value patterns
+                    let txType: 'airdrop' | 'epo' | 'general' = 'general'
+                    if (usdValue >= 10 && usdValue <= 100) {
+                      txType = 'airdrop' // Typical airdrop amounts
+                    } else if (usdValue > 100) {
+                      txType = 'epo' // Larger EPO investments
+                    }
+                    
+                    transactions.push({
+                      hash: txHash as string,
+                      from: tx.from || '',
+                      to: tx.to || '',
+                      value,
+                      token: token.symbol,
+                      network: network.name,
+                      timestamp: new Date(Number(block.timestamp || 0) * 1000).toISOString(),
+                      type: txType,
+                      status: receipt?.status ? 'success' : 'failed',
+                      gasUsed: receipt?.gasUsed.toString(),
+                      usdValue
+                    })
+                  }
+                } catch (txError) {
+                  // Skip failed transactions
+                  continue
+                }
+              }
+            }
+          }
+        } catch (networkError) {
+          console.error(`Error fetching transactions for ${token.network}:`, networkError)
+        }
+      }
+
+      // Sort by timestamp (newest first)
+      transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      setRecentTransactions(transactions.slice(0, 50)) // Keep latest 50
+
+    } catch (error: any) {
+      console.error('Error fetching transactions:', error)
+    } finally {
+      setIsLoadingTransactions(false)
+    }
+  }
+
+  // Auto-refresh balances and transactions
   useEffect(() => {
     if (auth.isAuthenticated) {
       fetchTreasuryBalances()
-      const interval = setInterval(fetchTreasuryBalances, 5 * 60 * 1000) // 5 minutes
+      fetchRecentTransactions()
+      const interval = setInterval(() => {
+        fetchTreasuryBalances()
+        fetchRecentTransactions()
+      }, 5 * 60 * 1000) // 5 minutes
       return () => clearInterval(interval)
     }
   }, [auth.isAuthenticated])
@@ -166,6 +280,13 @@ const AdminTreasuryDashboard: React.FC = () => {
   const totalUSDValue = treasuryBalances.reduce((sum, balance) => sum + balance.balanceUSD, 0)
   const accessibleTreasuries = treasuryBalances.filter(b => b.isAccessible).length
   const totalTreasuries = treasuryBalances.length
+  
+  // Transaction analytics
+  const airdropTransactions = recentTransactions.filter(tx => tx.type === 'airdrop')
+  const epoTransactions = recentTransactions.filter(tx => tx.type === 'epo')
+  const totalTransactionValue = recentTransactions.reduce((sum, tx) => sum + tx.usdValue, 0)
+  const airdropValue = airdropTransactions.reduce((sum, tx) => sum + tx.usdValue, 0)
+  const epoValue = epoTransactions.reduce((sum, tx) => sum + tx.usdValue, 0)
 
   // Logout function
   const logout = () => {
@@ -233,11 +354,14 @@ const AdminTreasuryDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={fetchTreasuryBalances}
-                disabled={isLoading}
+                onClick={() => {
+                  fetchTreasuryBalances()
+                  fetchRecentTransactions()
+                }}
+                disabled={isLoading || isLoadingTransactions}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {isLoading ? '🔄 Refreshing...' : '🔄 Refresh'}
+                {(isLoading || isLoadingTransactions) ? '🔄 Refreshing...' : '🔄 Refresh All'}
               </button>
               <button
                 onClick={logout}
@@ -251,8 +375,37 @@ const AdminTreasuryDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8">
+              {[
+                { id: 'overview', name: 'Overview', icon: '📊' },
+                { id: 'balances', name: 'Treasury Balances', icon: '💰' },
+                { id: 'transactions', name: 'Recent Transactions', icon: '📝' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -293,97 +446,258 @@ const AdminTreasuryDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <span className="text-2xl">🔄</span>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <span className="text-2xl">🎁</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Airdrop Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      ${airdropValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-gray-500">{airdropTransactions.length} transactions</p>
+                  </div>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                <p className="text-sm font-bold text-gray-900">
-                  {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
-                </p>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <span className="text-2xl">🦄</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">EPO Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      ${epoValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-gray-500">{epoTransactions.length} transactions</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <span className="text-2xl">📊</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Total Transactions</p>
+                    <p className="text-2xl font-bold text-gray-900">{recentTransactions.length}</p>
+                    <p className="text-xs text-gray-500">
+                      ${totalTransactionValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} volume
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <span className="text-2xl">🔄</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Last Updated</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Never'}
+                    </p>
+                    {(isLoading || isLoadingTransactions) && (
+                      <p className="text-xs text-blue-500">Refreshing...</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded-lg">
-            <p className="text-red-800">❌ {error}</p>
+        {/* Treasury Balances Tab */}
+        {activeTab === 'balances' && (
+          <div>
+            {/* Error Display */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-100 border border-red-400 rounded-lg">
+                <p className="text-red-800">❌ {error}</p>
+              </div>
+            )}
+
+            {/* Treasury Balances Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Treasury Balances</h2>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Network
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Token
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Address
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Balance
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        USD Value
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {treasuryBalances.map((balance, index) => (
+                      <tr key={index} className={balance.isAccessible ? '' : 'bg-red-50'}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {balance.network}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {balance.token}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                          {balance.address.slice(0, 6)}...{balance.address.slice(-4)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {parseFloat(balance.balance).toLocaleString(undefined, { 
+                            maximumFractionDigits: 6 
+                          })} {balance.token}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          ${balance.balanceUSD.toLocaleString(undefined, { 
+                            maximumFractionDigits: 2 
+                          })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {balance.isAccessible ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              ✅ Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              ❌ Error
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Treasury Balances Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Treasury Balances</h2>
+        {/* Transactions Tab */}
+        {activeTab === 'transactions' && (
+          <div>
+            {isLoadingTransactions && (
+              <div className="mb-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-600">Loading recent transactions...</p>
+              </div>
+            )}
+
+            {/* Transaction Filters */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              <button className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                All ({recentTransactions.length})
+              </button>
+              <button className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                Airdrop ({airdropTransactions.length})
+              </button>
+              <button className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                EPO ({epoTransactions.length})
+              </button>
+            </div>
+
+            {/* Transactions Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">Recent Treasury Transactions</h2>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        From
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Network
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {recentTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                          No recent transactions found
+                        </td>
+                      </tr>
+                    ) : (
+                      recentTransactions.map((tx, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              tx.type === 'airdrop' ? 'bg-orange-100 text-orange-800' :
+                              tx.type === 'epo' ? 'bg-purple-100 text-purple-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {tx.type === 'airdrop' ? '🎁' : tx.type === 'epo' ? '🦄' : '📊'} {tx.type.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                            {tx.from.slice(0, 6)}...{tx.from.slice(-4)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {parseFloat(tx.value).toFixed(4)} {tx.token}
+                            <div className="text-xs text-gray-500">
+                              ≈ ${tx.usdValue.toFixed(2)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {tx.network}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(tx.timestamp).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              tx.status === 'success' ? 'bg-green-100 text-green-800' :
+                              tx.status === 'failed' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {tx.status === 'success' ? '✅' : tx.status === 'failed' ? '❌' : '⏳'} {tx.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Network
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Token
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Address
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Balance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    USD Value
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {treasuryBalances.map((balance, index) => (
-                  <tr key={index} className={balance.isAccessible ? '' : 'bg-red-50'}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {balance.network}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {balance.token}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                      {balance.address.slice(0, 6)}...{balance.address.slice(-4)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {parseFloat(balance.balance).toLocaleString(undefined, { 
-                        maximumFractionDigits: 6 
-                      })} {balance.token}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${balance.balanceUSD.toLocaleString(undefined, { 
-                        maximumFractionDigits: 2 
-                      })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {balance.isAccessible ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ✅ Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          ❌ Error
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
 
         {/* Security Notice */}
         <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -398,7 +712,7 @@ const AdminTreasuryDashboard: React.FC = () => {
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
                   This dashboard contains sensitive financial information and is restricted to authorized administrators only.
-                  All access attempts are logged and monitored.
+                  All access attempts are logged and monitored. Airdrop and EPO transactions are automatically categorized based on transaction value patterns.
                 </p>
               </div>
             </div>

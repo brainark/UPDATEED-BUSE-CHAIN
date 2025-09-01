@@ -1,4 +1,5 @@
 import { ArrowRightIcon, GiftIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { HeroShaderBackground } from './shaders'
 
 interface HeroProps {
   onNavigateToSection?: (section: string) => void
@@ -6,12 +7,12 @@ interface HeroProps {
 
 export default function Hero({ onNavigateToSection }: HeroProps = {}) {
   return (
-    <section className="relative overflow-hidden py-20 sm:py-32 bg-deep-black">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 opacity-80" />
+    <section className="relative overflow-hidden py-20 sm:py-32 bg-deep-black w-full">
+      {/* Shader Background */}
+      <HeroShaderBackground />
       
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
+      <div className="relative w-full px-4 sm:px-6 lg:px-8">
+        <div className="text-center w-full">
           {/* Main heading */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-8">
             Welcome to{' '}
