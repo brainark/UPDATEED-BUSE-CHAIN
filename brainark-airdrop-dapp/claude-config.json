@@ -1,0 +1,10 @@
+{
+  "api_key": "sk-ant-api03-fe129f4c-5ebd-4850-8be9-2fac4c1be37e",
+  "model": "claude-sonnet-4-20250514",
+  "default_max_tokens": 4000,
+  "temperature": 0.7,
+  "history_file": "./claude-history.json",
+  "editor": "code",
+  "offline_mode": true,
+  "auth_type": "api_key"
+}

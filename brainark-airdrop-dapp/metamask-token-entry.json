@@ -1,0 +1,10 @@
+{
+  "424242": {
+    "0x0000000000000000000000000000000000000000": {
+      "name": "BrainArk Native Coin",
+      "symbol": "BAK", 
+      "decimals": 18,
+      "logo": "brainark.svg"
+    }
+  }
+}

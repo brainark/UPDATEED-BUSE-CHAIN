@@ -1,0 +1,84 @@
+{
+  "network": {
+    "name": "BrainArk Testnet",
+    "rpc": "https://rpc.brainark.online",
+    "chainId": 424242,
+    "currency": "BAK"
+  },
+  "accounts": {
+    "admin": {
+      "address": "0xc9dE877a53f85BF51D76faed0C8c8842EFb35782",
+      "privateKey": "*** ENCRYPTED ***",
+      "balance": "20299.997184839994907915 BAK",
+      "role": "Contract Owner & Deployer"
+    },
+    "oracle": {
+      "address": "0xc74CC2004e40ae32DD5ED5c74043422DA3892722",
+      "privateKey": "*** ENCRYPTED ***",
+      "role": "Cross-chain Oracle"
+    }
+  },
+  "contracts": {
+    "epo": {
+      "name": "BrainArkEPOComplete",
+      "address": "0x979a866bcf3c4ca6840bf7c2615d9b251b43f7a7",
+      "deployed": true,
+      "balance": "100.0 BAK",
+      "features": [
+        "Bonding curve pricing (starts at $0.02)",
+        "Cross-chain payments (Ethereum, BSC, Polygon)",
+        "Multi-token support",
+        "Oracle-based distribution",
+        "Emergency controls"
+      ]
+    },
+    "airdrop": {
+      "name": "BrainArkAirdrop",
+      "address": "Not deployed",
+      "deployed": false,
+      "features": [
+        "Referral system (5% rewards)",
+        "Social media verification",
+        "Multiple claim tiers",
+        "Anti-bot protection"
+      ]
+    }
+  },
+  "testing": {
+    "frontendUrl": "http://localhost:3002",
+    "testWallets": [
+      {
+        "name": "TestUser1",
+        "address": "0x5868269e193c74DbA0525b72c6a6857e7CD16Cc2",
+        "privateKey": "0x202a1fa2f9882892e299541e97c1fcbe9ca2545cf091fdc11f0f4030454c2092"
+      },
+      {
+        "name": "TestUser2",
+        "address": "0xB4F0Fc12C8599F76c8Cf96Bcdbffad0E29917DeD",
+        "privateKey": "0xf7ef6cfebc6b0e24515a7f08a7356ac9c4db0e7757f5aa7cb0dcbb73a1b838ca"
+      },
+      {
+        "name": "TestUser3",
+        "address": "0xf60C45B17f4A177DFfE7b65E77894f2a992B2cf3",
+        "privateKey": "0x6e0dc3cdacec13a66841c201a7ea06783cddfdac2c469b35040872f27a9fdf4d"
+      },
+      {
+        "name": "TestUser4",
+        "address": "0xE14bD741E1e92f05AD52E5b0A990770b70221862",
+        "privateKey": "0x8099f82ef0bc579d94bf13090ab9576231052f6c0db4f01281ace317711235d8"
+      },
+      {
+        "name": "TestUser5",
+        "address": "0xef4270D9919C4303213dB2f3d100CC5fB4411d38",
+        "privateKey": "0x9c5613583e431f681934c27d1df97fa16417ffc86ea5cf263c71963ec5cce07f"
+      }
+    ],
+    "testScenarios": [
+      "EPO token purchase with BAK",
+      "Cross-chain payment verification",
+      "Airdrop claim with referral",
+      "Social media verification",
+      "Oracle transaction processing"
+    ]
+  }
+}
