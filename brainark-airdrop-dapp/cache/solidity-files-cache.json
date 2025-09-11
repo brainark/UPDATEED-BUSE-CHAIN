@@ -800,8 +800,8 @@
       ]
     },
     "/home/brainark/brainark_besu_chain/brainark-airdrop-dapp/contracts/BrainArkEPOComplete.sol": {
-      "lastModificationDate": 1756483951229,
-      "contentHash": "ac12a968595032975c7e8e5716db4edc",
+      "lastModificationDate": 1756572885851,
+      "contentHash": "069b08f26a96e540baca035574d9eea2",
       "sourceName": "contracts/BrainArkEPOComplete.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -841,6 +841,38 @@
       "artifacts": [
         "BrainArkEPOComplete"
       ]
+    },
+    "/home/brainark/brainark_besu_chain/brainark-airdrop-dapp/contracts/BrainArkEPOEnhanced.sol": {
+      "lastModificationDate": 1756574953323,
+      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sourceName": "contracts/BrainArkEPOEnhanced.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
     }
   }
 }

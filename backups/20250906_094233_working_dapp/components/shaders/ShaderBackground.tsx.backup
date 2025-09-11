@@ -1,0 +1,444 @@
+import React, { useState, useEffect, useMemo, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import only the available shaders from @paper-design/shaders-react
+const MeshGradient = dynamic(() => import('@paper-design/shaders-react').then(mod => mod.MeshGradient), { 
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black" />
+})
+
+// Custom particle effect using CSS animations (fallback for ParticleField)
+const CSSParticles: React.FC<{ count: number; opacity: number }> = ({ count, opacity }) => {
+  const particles = useMemo(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      animationDelay: Math.random() * 20,
+      animationDuration: 20 + Math.random() * 20,
+      size: 1 + Math.random() * 3
+    }))
+  }, [count])
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((particle) => (
+        <div
+          key={particle.id}
+          className="absolute rounded-full bg-white animate-float"
+          style={{
+            left: `${particle.left}%`,
+            top: `${particle.top}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            opacity: opacity,
+            animationDelay: `${particle.animationDelay}s`,
+            animationDuration: `${particle.animationDuration}s`
+          }}
+        />
+      ))}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          25% { transform: translateY(-10px) translateX(5px); }
+          50% { transform: translateY(-20px) translateX(-5px); }
+          75% { transform: translateY(-10px) translateX(10px); }
+        }
+        .animate-float {
+          animation: float linear infinite;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// Custom wave effect using CSS animations (fallback for WaveField)
+const CSSWaves: React.FC<{ colors: string[]; speed: number; opacity: number }> = ({ colors, speed, opacity }) => {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {colors.map((color, index) => (
+        <div
+          key={index}
+          className="absolute inset-0 wave-animation"
+          style={{
+            background: `radial-gradient(ellipse 100% 100% at 50% 120%, transparent 40%, ${color}20 70%, transparent 100%)`,
+            animationDelay: `${index * 2}s`,
+            animationDuration: `${20 / (speed || 0.01)}s`,
+            opacity: opacity * (1 - index * 0.2)
+          }}
+        />
+      ))}
+      <style jsx>{`
+        @keyframes wave {
+          0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+          25% { transform: translateX(-45%) translateY(-10px) scale(1.05); }
+          50% { transform: translateX(-55%) translateY(-5px) scale(0.95); }
+          75% { transform: translateX(-50%) translateY(-15px) scale(1.02); }
+        }
+        .wave-animation {
+          animation: wave ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// Custom fluid effect using CSS animations (fallback for FluidField)
+const CSSFluid: React.FC<{ colors: string[]; speed: number; opacity: number }> = ({ colors, speed, opacity }) => {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {colors.map((color, index) => (
+        <div
+          key={index}
+          className="absolute inset-0 fluid-animation"
+          style={{
+            background: `radial-gradient(circle at ${30 + index * 20}% ${40 + index * 15}%, ${color}40 0%, transparent 50%)`,
+            animationDelay: `${index * 1.5}s`,
+            animationDuration: `${25 / (speed || 0.01)}s`,
+            opacity: opacity * (0.8 - index * 0.15)
+          }}
+        />
+      ))}
+      <style jsx>{`
+        @keyframes fluid {
+          0% { transform: scale(1) rotate(0deg); }
+          25% { transform: scale(1.1) rotate(5deg); }
+          50% { transform: scale(0.9) rotate(-3deg); }
+          75% { transform: scale(1.05) rotate(2deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+        .fluid-animation {
+          animation: fluid ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// Custom hook for shader settings based on device capabilities
+export function useShaderSettings() {
+  const [settings, setSettings] = useState({
+    enabled: true,
+    quality: 'high' as 'low' | 'medium' | 'high',
+    reducedMotion: false,
+    isMobile: false,
+    isVisible: true,
+    performanceMode: false
+  })
+
+  useEffect(() => {
+    // Detect device capabilities
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                    window.innerWidth < 768
+    
+    // Check for reduced motion preference
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    
+    // Performance detection (with fallbacks for unsupported properties)
+    const deviceMemory = (navigator as any).deviceMemory
+    const hardwareConcurrency = (navigator as any).hardwareConcurrency
+    const isLowPower = (deviceMemory && deviceMemory < 4) || 
+                      (hardwareConcurrency && hardwareConcurrency < 4) ||
+                      isMobile
+    
+    // Set quality based on device
+    let quality: 'low' | 'medium' | 'high' = 'high'
+    if (isMobile || isLowPower) quality = 'medium'
+    if (isMobile && isLowPower) quality = 'low'
+
+    setSettings(prev => ({
+      ...prev,
+      isMobile,
+      reducedMotion,
+      quality,
+      performanceMode: isLowPower
+    }))
+
+    // Visibility API for performance
+    const handleVisibilityChange = () => {
+      setSettings(prev => ({
+        ...prev,
+        isVisible: !document.hidden
+      }))
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  return settings
+}
+
+// Professional shader configurations
+export const shaderConfigs = {
+  hero: {
+    high: {
+      colors: ['#6366f1', '#8b5cf6', '#3b82f6', '#06b6d4', '#10b981'],
+      speed: 0.02,
+      density: 1.5,
+      strength: 4,
+      complexity: 0.8
+    },
+    medium: {
+      colors: ['#6366f1', '#8b5cf6', '#3b82f6'],
+      speed: 0.015,
+      density: 1.2,
+      strength: 3,
+      complexity: 0.6
+    },
+    low: {
+      colors: ['#6366f1', '#3b82f6'],
+      speed: 0.01,
+      density: 0.8,
+      strength: 2,
+      complexity: 0.4
+    }
+  },
+  airdrop: {
+    high: {
+      colors: ['#059669', '#10b981', '#34d399', '#6ee7b7'],
+      speed: 0.025,
+      density: 1.8,
+      strength: 3.5
+    },
+    medium: {
+      colors: ['#059669', '#10b981', '#34d399'],
+      speed: 0.02,
+      density: 1.3,
+      strength: 2.5
+    },
+    low: {
+      colors: ['#059669', '#10b981'],
+      speed: 0.015,
+      density: 0.9,
+      strength: 2
+    }
+  },
+  epo: {
+    high: {
+      colors: ['#dc2626', '#ef4444', '#f87171', '#fca5a5'],
+      speed: 0.03,
+      density: 2.0,
+      strength: 4.2
+    },
+    medium: {
+      colors: ['#dc2626', '#ef4444', '#f87171'],
+      speed: 0.025,
+      density: 1.4,
+      strength: 3
+    },
+    low: {
+      colors: ['#dc2626', '#ef4444'],
+      speed: 0.02,
+      density: 1.0,
+      strength: 2.2
+    }
+  },
+  explorer: {
+    high: {
+      colors: ['#7c3aed', '#a855f7', '#c084fc', '#ddd6fe'],
+      speed: 0.02,
+      density: 1.6,
+      strength: 3.8
+    },
+    medium: {
+      colors: ['#7c3aed', '#a855f7', '#c084fc'],
+      speed: 0.015,
+      density: 1.2,
+      strength: 2.8
+    },
+    low: {
+      colors: ['#7c3aed', '#a855f7'],
+      speed: 0.01,
+      density: 0.8,
+      strength: 2
+    }
+  }
+}
+
+// Enhanced Hero Shader Background
+export const HeroShaderBackground: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const settings = useShaderSettings()
+  const config = shaderConfigs.hero[settings.quality]
+
+  if (!settings.enabled || !settings.isVisible) {
+    return <div className={`absolute inset-0 bg-gradient-to-br from-gray-900 to-black ${className}`} />
+  }
+
+  return (
+    <div className={`absolute inset-0 ${className}`}>
+      <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black" />}>
+        <MeshGradient
+          color1={config.colors[0]}
+          color2={config.colors[1]}
+          color3={config.colors[2] || config.colors[0]}
+          color4={config.colors[3] || config.colors[1]}
+          speed={settings.reducedMotion ? 0 : config.speed}
+          style={{ width: '100%', height: '100%' }}
+        />
+        {settings.quality === 'high' && !settings.reducedMotion && (
+          <CSSParticles
+            count={settings.isMobile ? 30 : 60}
+            opacity={0.1}
+          />
+        )}
+      </Suspense>
+    </div>
+  )
+}
+
+// Section-specific shader backgrounds
+export const AirdropShaderBackground: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const settings = useShaderSettings()
+  const config = shaderConfigs.airdrop[settings.quality]
+
+  return (
+    <div className={`absolute inset-0 ${className}`}>
+      <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-green-900/20 to-emerald-800/20" />}>
+        <MeshGradient
+          color1={config.colors[0]}
+          color2={config.colors[1]}
+          color3={config.colors[2] || config.colors[0]}
+          color4={config.colors[3] || config.colors[1]}
+          speed={settings.reducedMotion ? 0 : config.speed}
+          style={{ width: '100%', height: '100%', opacity: 0.3 }}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+export const EPOShaderBackground: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const settings = useShaderSettings()
+  const config = shaderConfigs.epo[settings.quality]
+
+  return (
+    <div className={`absolute inset-0 ${className}`}>
+      <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-red-900/20 to-orange-800/20" />}>
+        <div className="absolute inset-0" style={{ opacity: 0.25 }}>
+          <MeshGradient
+            color1={config.colors[0]}
+            color2={config.colors[1]}
+            color3={config.colors[2] || config.colors[0]}
+            color4={config.colors[3] || config.colors[1]}
+            speed={settings.reducedMotion ? 0 : config.speed}
+            style={{ width: '100%', height: '100%' }}
+          />
+          {!settings.reducedMotion && (
+            <CSSWaves
+              colors={config.colors}
+              speed={config.speed}
+              opacity={0.3}
+            />
+          )}
+        </div>
+      </Suspense>
+    </div>
+  )
+}
+
+export const ExplorerShaderBackground: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const settings = useShaderSettings()
+  const config = shaderConfigs.explorer[settings.quality]
+
+  return (
+    <div className={`absolute inset-0 ${className}`}>
+      <Suspense fallback={<div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-indigo-800/20" />}>
+        <div className="absolute inset-0" style={{ opacity: 0.2 }}>
+          <MeshGradient
+            color1={config.colors[0]}
+            color2={config.colors[1]}
+            color3={config.colors[2] || config.colors[0]}
+            color4={config.colors[3] || config.colors[1]}
+            speed={settings.reducedMotion ? 0 : config.speed}
+            style={{ width: '100%', height: '100%' }}
+          />
+          {!settings.reducedMotion && (
+            <CSSFluid
+              colors={config.colors}
+              speed={config.speed}
+              opacity={0.4}
+            />
+          )}
+        </div>
+      </Suspense>
+    </div>
+  )
+}
+
+// Interactive Button Shader Component
+export const ShaderButton: React.FC<{
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: 'primary' | 'airdrop' | 'epo' | 'explorer'
+  className?: string
+  disabled?: boolean
+}> = ({ 
+  children, 
+  onClick, 
+  variant = 'primary', 
+  className = "", 
+  disabled = false 
+}) => {
+  const [isHovered, setIsHovered] = useState(false)
+  const settings = useShaderSettings()
+
+  const variantConfigs = {
+    primary: { colors: ['#6366f1', '#8b5cf6'], baseClass: 'bg-indigo-600 hover:bg-indigo-700' },
+    airdrop: { colors: ['#059669', '#10b981'], baseClass: 'bg-green-600 hover:bg-green-700' },
+    epo: { colors: ['#dc2626', '#ef4444'], baseClass: 'bg-red-600 hover:bg-red-700' },
+    explorer: { colors: ['#7c3aed', '#a855f7'], baseClass: 'bg-purple-600 hover:bg-purple-700' }
+  }
+
+  const config = variantConfigs[variant]
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        relative overflow-hidden px-6 py-3 rounded-lg font-semibold text-white 
+        transition-all duration-300 transform hover:scale-105 disabled:opacity-50 
+        disabled:cursor-not-allowed ${config.baseClass} ${className}
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Shader background for button */}
+      {settings.quality !== 'low' && isHovered && !settings.reducedMotion && (
+        <div className="absolute inset-0" style={{ opacity: 0.3 }}>
+          <Suspense fallback={null}>
+            <CSSWaves
+              colors={config.colors}
+              speed={0.05}
+              opacity={0.5}
+            />
+          </Suspense>
+        </div>
+      )}
+      <span className="relative z-10">{children}</span>
+    </button>
+  )
+}
+
+// Navigation Shader Backdrop
+export const NavigationShader: React.FC<{ className?: string }> = ({ className = "" }) => {
+  const settings = useShaderSettings()
+
+  return (
+    <div className={`absolute inset-0 ${className}`}>
+      <Suspense fallback={<div className="absolute inset-0 bg-black/90" />}>
+        <div style={{ opacity: 0.5 }}>
+          <MeshGradient
+            color1="#1f2937"
+            color2="#374151"
+            color3="#4b5563"
+            color4="#1f2937"
+            speed={settings.reducedMotion ? 0 : 0.01}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+      </Suspense>
+    </div>
+  )
+}

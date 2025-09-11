@@ -1,0 +1,174 @@
+# ================================================================================================
+# BRAINARK AIRDROP DAPP - PRODUCTION ENVIRONMENT
+# ================================================================================================
+# Server: 84.247.171.69 - /var/www/brainark-dapp
+# Updated: 2025-09-02
+# Version: 1.0.0
+# ================================================================================================
+
+# ================================================================================================
+# CORE NETWORK CONFIGURATION
+# ================================================================================================
+NEXT_PUBLIC_RPC_URL=https://rpc.brainark.online
+NEXT_PUBLIC_CHAIN_ID=424242
+NEXT_PUBLIC_NETWORK_ENV=production
+NEXT_PUBLIC_WEBSITE_URL=https://brainark.online
+NODE_ENV=production
+
+# ================================================================================================
+# CONTRACT ADDRESSES - PRODUCTION DEPLOYED (Verified)
+# ================================================================================================
+# EPO Contract - Handles Early Purchase Offering
+NEXT_PUBLIC_EPO_CONTRACT=0xdE04886D4e89f48F73c1684f2e610b25D561DD48
+
+# Airdrop Contract - Manages token distribution
+NEXT_PUBLIC_AIRDROP_CONTRACT=0x1Df35D8e45E0192cD3C25B007a5417b2235642E5
+
+# Funding Wallet - Main treasury
+NEXT_PUBLIC_FUNDING_WALLET=0xc9dE877a53f85BF51D76faed0C8c8842EFb35782
+
+# ================================================================================================
+# WALLET CONNECT CONFIGURATION
+# ================================================================================================
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=138029c5ee4c7a8ecfbe38fddcca1818
+
+# ================================================================================================
+# MULTI-NETWORK TREASURY ADDRESSES
+# ================================================================================================
+# Treasury addresses for accepting payments across different blockchain networks
+
+# Ethereum Mainnet Treasury Addresses
+NEXT_PUBLIC_ETH_MAINNET_TREASURY=0xC91A5902da7321054cEdAeB49ce9A6a3835Fc417
+NEXT_PUBLIC_USDT_ETHEREUM_TREASURY=0xc9dE877a53f85BF51D76faed0C8c8842EFb35782
+NEXT_PUBLIC_USDC_ETHEREUM_TREASURY=0x3A9ca3d316F2032d3a21741cBea2e047fd3C1145
+
+# BSC Mainnet Treasury Addresses
+NEXT_PUBLIC_BNB_BSC_TREASURY=0x794F67aA174bD0A252BeCA0089490a58Cc695a05
+NEXT_PUBLIC_USDT_BSC_TREASURY=0xC13527f3bBAaf4cd726d07a78da9C5b74876527F
+NEXT_PUBLIC_USDC_BSC_TREASURY=0x21FCcbB9b9b7c620BCbA61B6668C30F64C22859c
+
+# Polygon Mainnet Treasury Addresses
+NEXT_PUBLIC_MATIC_POLYGON_TREASURY=0x6351f025E2DDe967A1FAD29d0fF44C3620F4EED7
+NEXT_PUBLIC_USDT_POLYGON_TREASURY=0xd413afAB39D24462ACE36CFE5D710Ce9B813c84B
+NEXT_PUBLIC_USDC_POLYGON_TREASURY=0xE97BF18735a1AB4A1bA9DDF284D7798A5B0f8a84
+
+# BrainArk Network Treasury (BAK Distribution)
+NEXT_PUBLIC_BAK_BRAINARK_TREASURY=0xC7A3e128f909153442D931BA430AC9aA55E9370D
+
+# ================================================================================================
+# ADMIN & ACCESS CONTROL
+# ================================================================================================
+# Single admin wallet with all administrative privileges
+NEXT_PUBLIC_ADMIN_ADDRESS=0xc9dE877a53f85BF51D76faed0C8c8842EFb35782
+NEXT_PUBLIC_OWNER_ADDRESS=0xc9dE877a53f85BF51D76faed0C8c8842EFb35782
+NEXT_PUBLIC_TREASURY_ADMIN=0xc9dE877a53f85BF51D76faed0C8c8842EFb35782
+
+# ================================================================================================
+# SOCIAL MEDIA & COMMUNITY CONFIGURATION
+# ================================================================================================
+NEXT_PUBLIC_TWITTER_HANDLE=sdogcoin1
+NEXT_PUBLIC_TELEGRAM_CHANNEL=@Brainark_Besu_BlockChain
+NEXT_PUBLIC_CONTACT_EMAIL=brainarkbesuchain@gmail.com
+
+# ================================================================================================
+# TWITTER API CONFIGURATION
+# ================================================================================================
+TWITTER_CLIENT_ID=lrxRR6HatGtHwqZYXIjJidKLT
+TWITTER_CLIENT_SECRET=dqlZFlGAn9RqiruegPoG9Pn3UzBOiuF9lwebnQxIQOTJCV3fTS
+TWITTER_BEARER_TOKEN=AAAAAAAAAAAAAAAAAAAAAK5S3QEAAAAA7%2BHlVCCzIGEbGdukx8QW8w4FFTE%3DNfTb0OVINE3lqECoT72lCQDqiivJZLYCBQFBwUqI0zGt0QjcBy
+TWITTER_CALLBACK_URL=https://brainark.online/api/auth/callback/twitter
+
+# ================================================================================================
+# TELEGRAM BOT CONFIGURATION
+# ================================================================================================
+TELEGRAM_BOT_TOKEN=8234150298:AAGuutr2qRMDKzJjInFFSB2AWt4H7wfD8po
+
+# ================================================================================================
+# APPWRITE CONFIGURATION (PRODUCTION)
+# ================================================================================================
+NEXT_PUBLIC_APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=68b38f7b000525d3e7f4
+NEXT_PUBLIC_APPWRITE_DATABASE_ID=default
+NEXT_PUBLIC_APPWRITE_COLLECTION_USERS=users
+NEXT_PUBLIC_APPWRITE_COLLECTION_AIRDROP=airdrop_registrations
+NEXT_PUBLIC_APPWRITE_COLLECTION_SOCIAL_TASKS=social_tasks
+NEXT_PUBLIC_APPWRITE_COLLECTION_REFERRALS=referrals
+NEXT_PUBLIC_APPWRITE_COLLECTION_BATCHES=distribution_batches
+
+# Server-side Appwrite API Key (for database operations)
+APPWRITE_API_KEY=standard_ac626a178832d5f3a4809fdf46e403e10748789aabf90fd119e9fe8d5c03e79262981a86e39c1271618b0b553a4710fe236c741c5b096e266e4ece2f88d4675f735f25b63b93ce1559e6e608bf1ae45a2068bd318b5b7d13220c118027be3ef7b58bb040b153f564d5b76b1b7dd087eb63d0cb11b2bfb58947e4e3d779b97fee
+
+# ================================================================================================
+# EXTERNAL NETWORK RPC URLS
+# ================================================================================================
+ETHEREUM_RPC_URL=https://ethereum-rpc.publicnode.com
+BSC_RPC_URL=https://bsc-dataseed1.binance.org
+POLYGON_RPC_URL=https://polygon-rpc.com
+
+# ================================================================================================
+# TOKEN CONTRACT ADDRESSES (ON RESPECTIVE NETWORKS)
+# ================================================================================================
+# Ethereum Mainnet Token Contracts
+USDT_ETHEREUM_CONTRACT=0xdAC17F958D2ee523a2206206994597C13D831ec7
+USDC_ETHEREUM_CONTRACT=0xA0b86a33E6441E02aaBBD88816953560998637e7
+
+# BSC Mainnet Token Contracts
+USDT_BSC_CONTRACT=0x55d398326f99059fF775485246999027B3197955
+USDC_BSC_CONTRACT=0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d
+
+# Polygon Mainnet Token Contracts
+USDT_POLYGON_CONTRACT=0xc2132D05D31c914a87C6611C10748AEb04B58e8F
+USDC_POLYGON_CONTRACT=0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+
+# ================================================================================================
+# PERFORMANCE & OPTIMIZATION SETTINGS
+# ================================================================================================
+NEXT_PUBLIC_ENABLE_PERFORMANCE_MODE=true
+NEXT_PUBLIC_API_POLLING_INTERVAL=30000
+NEXT_PUBLIC_PRICE_UPDATE_INTERVAL=60000
+NEXT_PUBLIC_CONTRACT_STATS_INTERVAL=45000
+
+# ================================================================================================
+# BUILD & VERSION INFORMATION
+# ================================================================================================
+NEXT_PUBLIC_BUILD_TIME=2025-09-02
+NEXT_PUBLIC_VERSION=1.0.0
+
+# ================================================================================================
+# SECURITY SETTINGS
+# ================================================================================================
+NEXT_PUBLIC_ENABLE_DEV_TOOLS=false
+NEXT_PUBLIC_ENABLE_DEBUG_MODE=false
+
+# ================================================================================================
+# PRIVATE KEYS & SENSITIVE DATA (PRODUCTION - KEEP SECURE!)
+# ================================================================================================
+# NOTE: In production, these should be loaded from secure vault or environment variables
+# Main deployment private key
+PRIVATE_KEY=0x861afdf2225271145ce840957ce60e5104d77b99de3fd42e15261fbdefebbf6c
+
+# Treasury Private Keys (for automated payments processing)
+ETH_MAINNET_PRIVATE_KEY=0x023e5cf0fd861ebd55487cfb54e95b427410454c64691692734524b3986590ba
+USDT_ETHEREUM_PRIVATE_KEY=0x861afdf2225271145ce840957ce60e5104d77b99de3fd42e15261fbdefebbf6c
+USDC_ETHEREUM_PRIVATE_KEY=0x6ade265b41c8ce72d261d0407a808973adf230b47407620b398fce78b7903861
+
+BNB_BSC_PRIVATE_KEY=0x0f23d5878670c9d0b418d866b9b271ce9ed023e9912edc6fb012875a2007dcc3
+USDT_BSC_PRIVATE_KEY=0x07d9335ae8b219145fed01dbea03be8772425c76e9707d7f2d5d8c4c4a5dda24
+USDC_BSC_PRIVATE_KEY=0x5fde0aa8ae9223c544b114b4525a6e86ebec534606a6995da682d12c9086b508
+
+MATIC_POLYGON_PRIVATE_KEY=0x70f97dcc5a4a04246aabb35faa4adbb6b594a649217ea90ccd6fd00ffb29c635
+USDT_POLYGON_PRIVATE_KEY=0x19dd4e6666e9114148cca67e3f4b37f30bf2f24960fceabe6c25393a54310bf5
+USDC_POLYGON_PRIVATE_KEY=0x7765867c9c5cd67b2f2e88d9f664824b92c0169fe59e779335d2a356a78e5775
+
+BAK_BRAINARK_PRIVATE_KEY=0xe655d659cab1a42eddc7eefc2f628a864b41c01a57976b058dbe62d090667d40
+
+# Admin private key
+ADMIN_PRIVATE_KEY=0x861afdf2225271145ce840957ce60e5104d77b99de3fd42e15261fbdefebbf6c
+
+# NextAuth Secret (for authentication)
+NEXTAUTH_SECRET=your_nextauth_secret_for_production
+NEXTAUTH_URL=https://brainark.online
+
+# ================================================================================================
+# END OF CONFIGURATION
+# ================================================================================================

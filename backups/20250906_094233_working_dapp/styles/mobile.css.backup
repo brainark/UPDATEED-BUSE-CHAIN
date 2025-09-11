@@ -1,0 +1,147 @@
+/* Enhanced Mobile Responsive Design */
+@media (max-width: 768px) {
+  /* Mobile-specific card adjustments */
+  .card-brilliant,
+  .card-dark {
+    @apply mx-2 rounded-xl;
+  }
+
+  /* Mobile navigation improvements */
+  .mobile-nav-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile grid adjustments */
+  .mobile-grid-1 {
+    @apply grid-cols-1;
+  }
+
+  .mobile-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  /* Mobile text adjustments */
+  .mobile-text-sm {
+    @apply text-sm;
+  }
+
+  .mobile-text-xs {
+    @apply text-xs;
+  }
+
+  /* Mobile padding adjustments */
+  .mobile-p-2 {
+    @apply p-2;
+  }
+
+  .mobile-p-4 {
+    @apply p-4;
+  }
+
+  /* Mobile spacing adjustments */
+  .mobile-space-y-2 > * + * {
+    @apply mt-2;
+  }
+
+  .mobile-space-y-4 > * + * {
+    @apply mt-4;
+  }
+
+  /* Mobile-specific header adjustments */
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
+  h3 {
+    @apply text-xl;
+  }
+}
+
+/* Tablet Responsive Design */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tablet-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  .tablet-grid-3 {
+    @apply grid-cols-3;
+  }
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 768px) {
+  button {
+    @apply min-h-[44px];
+  }
+  
+  input, select, textarea {
+    @apply min-h-[44px];
+  }
+
+  /* Mobile-specific quick actions */
+  .quick-actions-tab {
+    @apply relative top-0 right-0 w-full mb-4 mx-2;
+  }
+
+  /* Mobile-friendly modal */
+  .modal-content {
+    @apply mx-2 max-h-[85vh];
+  }
+
+  /* Mobile-friendly forms */
+  .form-input {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .container {
+    @apply px-2;
+  }
+
+  .card-brilliant,
+  .card-dark {
+    @apply p-3;
+  }
+
+  /* Extra small text adjustments */
+  .text-4xl {
+    @apply text-2xl;
+  }
+
+  .text-5xl {
+    @apply text-3xl;
+  }
+
+  .text-3xl {
+    @apply text-xl;
+  }
+
+  .text-2xl {
+    @apply text-lg;
+  }
+
+  .text-xl {
+    @apply text-base;
+  }
+}

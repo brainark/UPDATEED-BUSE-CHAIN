@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { EPO_CONFIG } from '@/utils/config'
 import AutoWalletConnection from './AutoWalletConnection'
+import EnhancedMobileWalletConnector from './EnhancedMobileWalletConnector'
+import MobileNetworkSwitcher from './MobileNetworkSwitcher'
 import { CheckCircleIcon, XCircleIcon, ClockIcon, UserGroupIcon, ExclamationTriangleIcon, ShareIcon, LinkIcon, CalendarIcon, LockClosedIcon, LockOpenIcon } from '@heroicons/react/24/outline'
 import { EPOShaderBackground } from './shaders'
 import { liquidityTracker, LIQUIDITY_LOCK_THRESHOLD, checkSellPermission } from '@/utils/liquidityTracker'
-import { useEPOContract } from '@/hooks/useEPOContract'
+import { useUnifiedEPOContract } from '@/hooks/useUnifiedEPOContract'
 import { startTokenPriceUpdates } from '@/utils/multiNetworkConfig'
 
 interface SupportedToken {
@@ -37,7 +39,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false)
   const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(false)
   const [selectedToken, setSelectedToken] = useState<string>('USDT')
-  const [selectedNetwork, setSelectedNetwork] = useState<string>('ethereum')
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('')
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState<boolean>(false)
   const [purchaseAmount, setPurchaseAmount] = useState<string>('')
   const [bakAmount, setBakAmount] = useState<string>('')
@@ -70,7 +72,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     return networkTokens[network as keyof typeof networkTokens] || []
   }
 
-  // Network switching helper
+  // Enhanced network switching with timeout and better error handling
   const switchToSelectedNetwork = async (networkKey: string) => {
     // Prevent multiple concurrent network switch attempts
     if (isSwitchingNetwork) {
@@ -91,19 +93,60 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     }
 
     setIsSwitchingNetwork(true)
+    
+    // Create timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Network switch timeout')), 30000) // 30 second timeout
+    })
+    
+    // Enhanced user feedback
+    const loadingToast = toast.loading(`Switching to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}...\nPlease approve in MetaMask`)
+    
     try {
       const chainIdHex = `0x${chainId.toString(16)}`
       
-      // Try to switch to the network
-      await window.ethereum.request({
+      // Check if already on correct network
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' })
+      if (currentChainId === chainIdHex) {
+        toast.dismiss(loadingToast)
+        toast.success(`Already on ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)} network`)
+        setSelectedNetwork(networkKey)
+        return
+      }
+      
+      // Try to switch with timeout
+      const switchPromise = window.ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: chainIdHex }],
       })
       
-      toast.success(`Successfully switched to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`)
-      setSelectedNetwork(networkKey)
+      await Promise.race([switchPromise, timeoutPromise])
+      
+      // Verify the switch was successful
+      const newChainId = await window.ethereum.request({ method: 'eth_chainId' })
+      if (newChainId === chainIdHex) {
+        toast.dismiss(loadingToast)
+        toast.success(`Successfully switched to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`)
+        setSelectedNetwork(networkKey)
+      } else {
+        throw new Error('Network switch verification failed')
+      }
       
     } catch (switchError: any) {
+      toast.dismiss(loadingToast)
+      
+      // Handle timeout
+      if (switchError.message === 'Network switch timeout') {
+        toast.error('Network switch timed out. Please try manually switching in MetaMask', { duration: 6000 })
+        return
+      }
+      
+      // Handle user rejection
+      if (switchError.code === 4001) {
+        toast.error('Network switch was cancelled by user')
+        return
+      }
+      
       // If network doesn't exist, add it
       if (switchError.code === 4902) {
         try {
@@ -112,40 +155,59 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
               chainId: '0x1',
               chainName: 'Ethereum Mainnet',
               nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['https://ethereum-rpc.publicnode.com'],
+              rpcUrls: ['https://ethereum-rpc.publicnode.com', 'https://cloudflare-eth.com'],
               blockExplorerUrls: ['https://etherscan.io']
             },
             bsc: {
               chainId: '0x38',
               chainName: 'BSC Mainnet',
               nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-              rpcUrls: ['https://bsc-rpc.publicnode.com'],
+              rpcUrls: ['https://bsc-rpc.publicnode.com', 'https://bsc.meowrpc.com'],
               blockExplorerUrls: ['https://bscscan.com']
             },
             polygon: {
               chainId: '0x89',
               chainName: 'Polygon Mainnet',
               nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-              rpcUrls: ['https://polygon-bor-rpc.publicnode.com'],
+              rpcUrls: ['https://polygon-bor-rpc.publicnode.com', 'https://polygon.meowrpc.com'],
               blockExplorerUrls: ['https://polygonscan.com']
             }
           }
           
-          await window.ethereum.request({
+          const addToast = toast.loading(`Adding ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)} network...`)
+          
+          const addPromise = window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [networkConfigs[networkKey]],
           })
           
+          await Promise.race([addPromise, timeoutPromise])
+          
+          toast.dismiss(addToast)
           toast.success(`Added and switched to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`)
           setSelectedNetwork(networkKey)
           
-        } catch (addError) {
+        } catch (addError: any) {
           console.error('Failed to add network:', addError)
-          toast.error('Failed to add network to wallet')
+          if (addError.message === 'Network switch timeout') {
+            toast.error('Adding network timed out. Please add manually in MetaMask', { duration: 6000 })
+          } else if (addError.code === 4001) {
+            toast.error('Adding network was cancelled by user')
+          } else {
+            toast.error('Failed to add network to wallet')
+          }
         }
       } else {
-        console.error('Failed to switch network:', switchError)
-        toast.error('Failed to switch network')
+        console.error('Network switch error:', switchError)
+        toast.error(`Network switch failed: ${switchError.message || 'Unknown error'}`, { duration: 5000 })
+        
+        // Provide manual instructions
+        setTimeout(() => {
+          toast(`💡 Manual Fix: Open MetaMask → Networks → Switch to ${networkKey.charAt(0).toUpperCase() + networkKey.slice(1)}`, {
+            duration: 8000,
+            icon: '💡'
+          })
+        }, 1000)
       }
     } finally {
       setIsSwitchingNetwork(false)
@@ -175,8 +237,12 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
     return address
   }
 
-  // Use real EPO contract data
-  const { stats: epoStats, isLoading: epoLoading, error: epoError, refetch: refetchEPO, purchaseBAK } = useEPOContract()
+  // Use real EPO contract data - try multiple data sources
+  const { stats, isLoading, error, refetch, purchaseBAK, isTransactionPending } = useUnifiedEPOContract()
+  
+  // Use unified EPO contract data
+  const currentStats = stats
+  const isStatsLoading = isLoading
   
   // Initialize token price updates on component mount
   useEffect(() => {
@@ -193,11 +259,11 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
   })
   
   // Get real contract data
-  const totalSold = epoStats ? parseFloat(epoStats.totalSold) : 0
-  const currentPrice = epoStats ? parseFloat(epoStats.price) : 0.02
-  const remainingSupply = epoStats ? parseFloat(epoStats.remainingSupply) : 100000000
-  const totalRaised = epoStats ? parseFloat(epoStats.totalRaised) : 0
-  const contractBalance = epoStats ? parseFloat(epoStats.contractBalance) : 0
+  const totalSold = stats ? parseFloat(stats.totalSold) : 0
+  const currentPrice = currentStats ? parseFloat(currentStats.price) : 0.02
+  const remainingSupply = currentStats ? parseFloat(currentStats.remainingSupply) : 100000000
+  const totalRaised = currentStats ? parseFloat(currentStats.totalRaised) : 0
+  const contractBalance = currentStats ? parseFloat(currentStats.contractBalance) : 0
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell'>('buy')
   
   // Liquidity lock state
@@ -340,7 +406,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
 
   // Update bonding curve data with real contract data
   useEffect(() => {
-    if (epoStats) {
+    if (stats) {
       const nextPrice = calculateBuyPrice(totalSold + 1000) // Price after buying 1000 tokens
       const marketCap = totalSold * currentPrice
       
@@ -354,7 +420,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
         liquidityPool: contractBalance + marketCap * 0.1 // Contract balance + estimated liquidity
       })
     }
-  }, [epoStats, totalSold, currentPrice, contractBalance])
+  }, [stats, totalSold, currentPrice, contractBalance])
 
   // Calculate time remaining and update countdown
   useEffect(() => {
@@ -456,7 +522,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
       if (tradeMode === 'buy') {
         // Convert input to wei for contract call (assuming ETH payment for now)
         const ethAmount = inputAmount * selectedTokenData.price / 3420.75 // Rough ETH conversion
-        const weiAmount = (ethAmount * 1e18).toString()
+        const weiAmount = Math.round(ethAmount * 1e18).toString()
         
         // Call real contract purchase function
         const txHash = await purchaseBAK(weiAmount)
@@ -468,7 +534,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
         
         // Refresh contract data after purchase
         setTimeout(() => {
-          refetchEPO()
+          refetch()
         }, 3000)
         
       } else {
@@ -617,13 +683,13 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
             {formatTimeRemaining(timeRemaining)}
           </div>
           <div className="text-lg text-gray-700">
-            {epoLoading ? 'Loading contract data...' : (
+            {isLoading ? 'Loading contract data...' : (
               `${totalSold.toLocaleString()} / ${TOTAL_EPO_SUPPLY.toLocaleString()} BAK Sold (${((totalSold / TOTAL_EPO_SUPPLY) * 100).toFixed(2)}%)`
             )}
           </div>
-          {epoError && (
+          {error && (
             <div className="text-sm text-red-600 mt-2">
-              Contract Error: {epoError}
+              Contract Status: {error?.message || 'Connecting...'}
             </div>
           )}
         </div>
@@ -839,7 +905,31 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                   <p className="text-gray-300 mb-6">
                     Connect your wallet to access enhanced trading features
                   </p>
-                  <AutoWalletConnection onConnectionChange={handleConnectionChange} />
+                  
+                  {/* Mobile-first wallet connection */}
+                  <div className="block md:hidden mb-6">
+                    <EnhancedMobileWalletConnector 
+                      onNetworkChange={(chainId) => {
+                        console.log('Network changed to:', chainId)
+                        // Update selected network based on chain ID
+                        const networkMap: Record<number, string> = {
+                          1: 'ethereum',
+                          56: 'bsc',
+                          137: 'polygon',
+                          424242: 'brainark'
+                        }
+                        const newNetwork = networkMap[chainId]
+                        if (newNetwork && newNetwork !== 'brainark') {
+                          setSelectedNetwork(newNetwork)
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Desktop wallet connection */}
+                  <div className="hidden md:block">
+                    <AutoWalletConnection onConnectionChange={handleConnectionChange} />
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -858,25 +948,25 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Contract Balance:</div>
                         <div className="font-semibold">
-                          {epoLoading ? 'Loading...' : `${contractBalance.toFixed(2)} BAK`}
+                          {isStatsLoading ? 'Loading...' : `${contractBalance.toLocaleString()} BAK`}
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Total Raised:</div>
                         <div className="font-semibold text-green-600">
-                          {epoLoading ? 'Loading...' : `$${totalRaised.toFixed(2)}`}
+                          {isLoading ? 'Loading...' : `$${totalRaised.toFixed(2)}`}
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Remaining Supply:</div>
                         <div className="font-semibold">
-                          {epoLoading ? 'Loading...' : `${remainingSupply.toFixed(0)} BAK`}
+                          {isLoading ? 'Loading...' : `${remainingSupply.toFixed(0)} BAK`}
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Contract Status:</div>
                         <div className="font-semibold">
-                          {epoLoading ? 'Loading...' : (epoError ? 'Error' : 'Active')}
+                          {isStatsLoading ? 'Loading...' : (contractBalance > 0 ? 'Active' : 'Error')}
                         </div>
                       </div>
                     </div>
@@ -1000,7 +1090,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                       {/* Cross-Chain Token Selection */}
                       <div className="card-brilliant p-4">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                          💱 Select Payment Token on {selectedNetwork ? selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1) : 'Network'}
+                          💱 Select Payment Token {selectedNetwork ? `on ${selectedNetwork.charAt(0).toUpperCase() + selectedNetwork.slice(1)}` : '(Select Network First)'}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           {getTokensForNetwork(selectedNetwork).map((token) => (
@@ -1259,7 +1349,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Current BAK Price</div>
                   <div className="font-semibold text-white">
-                    {epoLoading ? 'Loading...' : `$${currentPrice.toFixed(4)}`}
+                    {isLoading ? 'Loading...' : `$${currentPrice.toFixed(4)}`}
                   </div>
                 </div>
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
@@ -1273,7 +1363,7 @@ const EnhancedEPOWithBondingCurve: React.FC = () => {
                 <div className="text-center p-3 bg-gray-800 rounded-lg">
                   <div className="text-sm text-gray-400">Tokens Sold</div>
                   <div className="font-semibold text-white">
-                    {epoLoading ? 'Loading...' : `${totalSold.toFixed(0)} BAK`}
+                    {isLoading ? 'Loading...' : `${totalSold.toFixed(0)} BAK`}
                   </div>
                 </div>
                 <div className="text-center p-3 bg-gray-800 rounded-lg">

@@ -1,0 +1,32 @@
+{
+  "name": "brainark-validator-timelock",
+  "version": "1.0.0",
+  "description": "30-year time-lock smart contract for BrainArk validator rewards (400M BAK tokens)",
+  "main": "hardhat.config.js",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:brainark": "hardhat run scripts/deploy.js --network brainark",
+    "node": "hardhat node",
+    "clean": "hardhat clean"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "smart-contract",
+    "timelock",
+    "defi",
+    "tokenomics",
+    "brainark",
+    "validator-rewards"
+  ],
+  "author": "BrainArk Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "hardhat": "^2.26.3"
+  }
+}

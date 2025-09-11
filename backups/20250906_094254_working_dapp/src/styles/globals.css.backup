@@ -1,0 +1,484 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles with Black and Brilliant White Background */
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-black via-gray-900 to-black text-white;
+    @apply font-sans antialiased;
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Brilliant white sections */
+  .bg-brilliant-white {
+    @apply bg-gradient-to-br from-white via-gray-50 to-white;
+    @apply text-gray-900;
+  }
+
+  /* Black sections */
+  .bg-deep-black {
+    @apply bg-gradient-to-br from-black via-gray-900 to-black;
+    @apply text-white;
+  }
+}
+
+/* Custom Colorful Button Themes */
+@layer components {
+  /* Airdrop Button - Red Gradient */
+  .btn-airdrop {
+    @apply bg-gradient-to-r from-red-500 via-red-600 to-red-700;
+    @apply hover:from-red-600 hover:via-red-700 hover:to-red-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-red-400 hover:border-red-300;
+  }
+
+  /* EPO Button - Teal Gradient */
+  .btn-epo {
+    @apply bg-gradient-to-r from-teal-500 via-teal-600 to-teal-700;
+    @apply hover:from-teal-600 hover:via-teal-700 hover:to-teal-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-teal-400 hover:border-teal-300;
+  }
+
+  /* Explorer Button - Blue Gradient */
+  .btn-explorer {
+    @apply bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700;
+    @apply hover:from-blue-600 hover:via-blue-700 hover:to-blue-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-blue-400 hover:border-blue-300;
+  }
+
+  /* Whitepaper Button - Purple Gradient */
+  .btn-whitepaper {
+    @apply bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700;
+    @apply hover:from-purple-600 hover:via-purple-700 hover:to-purple-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-purple-400 hover:border-purple-300;
+  }
+
+  /* Connect Wallet Button - Orange Gradient */
+  .btn-connect-wallet {
+    @apply bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700;
+    @apply hover:from-orange-600 hover:via-orange-700 hover:to-orange-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-orange-400 hover:border-orange-300;
+  }
+
+  /* Success Button - Green Gradient */
+  .btn-success {
+    @apply bg-gradient-to-r from-green-500 via-green-600 to-green-700;
+    @apply hover:from-green-600 hover:via-green-700 hover:to-green-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-green-400 hover:border-green-300;
+  }
+
+  /* Warning Button - Yellow Gradient */
+  .btn-warning {
+    @apply bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700;
+    @apply hover:from-yellow-600 hover:via-yellow-700 hover:to-yellow-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-yellow-400 hover:border-yellow-300;
+  }
+
+  /* Danger Button - Pink Gradient */
+  .btn-danger {
+    @apply bg-gradient-to-r from-pink-500 via-pink-600 to-pink-700;
+    @apply hover:from-pink-600 hover:via-pink-700 hover:to-pink-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-pink-400 hover:border-pink-300;
+  }
+
+  /* Quick Action Buttons */
+  .btn-quick-action {
+    @apply bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700;
+    @apply hover:from-indigo-600 hover:via-indigo-700 hover:to-indigo-800;
+    @apply text-white font-medium py-2 px-4 rounded-lg;
+    @apply transform hover:scale-105 transition-all duration-200;
+    @apply shadow-md hover:shadow-lg;
+    @apply border border-indigo-400 hover:border-indigo-300;
+  }
+
+  /* Social Media Buttons */
+  .btn-twitter {
+    @apply bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600;
+    @apply hover:from-blue-500 hover:via-blue-600 hover:to-blue-700;
+    @apply text-white font-semibold py-2 px-4 rounded-lg;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  .btn-telegram {
+    @apply bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700;
+    @apply hover:from-blue-600 hover:via-blue-700 hover:to-blue-800;
+    @apply text-white font-semibold py-2 px-4 rounded-lg;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  /* Card Styles */
+  .card-brilliant {
+    @apply bg-gradient-to-br from-white via-gray-50 to-white;
+    @apply text-gray-900 rounded-2xl shadow-2xl;
+    @apply border border-gray-200;
+    @apply backdrop-blur-sm;
+  }
+
+  .card-dark {
+    @apply bg-gradient-to-br from-gray-800 via-gray-900 to-black;
+    @apply text-white rounded-2xl shadow-2xl;
+    @apply border border-gray-700;
+    @apply backdrop-blur-sm;
+  }
+
+  /* Network Status Indicators */
+  .network-connected {
+    @apply text-green-400 font-semibold;
+  }
+
+  .network-disconnected {
+    @apply text-red-400 font-semibold;
+  }
+
+  .network-switch-btn {
+    @apply bg-gradient-to-r from-orange-500 to-orange-600;
+    @apply hover:from-orange-600 hover:to-orange-700;
+    @apply text-white font-medium py-1 px-3 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-200;
+    @apply shadow-md hover:shadow-lg;
+    @apply text-sm;
+  }
+
+  /* Animation Classes */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  .animate-bounce-gentle {
+    animation: bounceGentle 2s infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 3s infinite;
+  }
+
+  /* EPO Time Limit Styles */
+  .epo-time-display {
+    @apply bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600;
+    @apply text-yellow-900 font-bold text-xl;
+    @apply px-6 py-3 rounded-xl shadow-lg;
+    @apply border-2 border-yellow-300;
+  }
+
+  .epo-progress-bar {
+    @apply w-full h-4 bg-gray-200 rounded-full overflow-hidden;
+  }
+
+  .epo-progress-fill {
+    @apply h-full bg-gradient-to-r from-green-400 via-green-500 to-green-600;
+    @apply transition-all duration-500 ease-out;
+  }
+
+  /* Quick Actions Tab */
+  .quick-actions-tab {
+    @apply fixed top-20 right-4 z-50;
+    @apply bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800;
+    @apply text-white rounded-xl shadow-2xl;
+    @apply border border-indigo-500;
+    @apply backdrop-blur-sm;
+    @apply min-w-[200px] p-4;
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm;
+    @apply flex items-center justify-center z-50;
+  }
+
+  .modal-content {
+    @apply bg-gradient-to-br from-white via-gray-50 to-white;
+    @apply text-gray-900 rounded-2xl shadow-2xl;
+    @apply border border-gray-200 max-w-2xl w-full mx-4;
+    @apply max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceGentle {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .quick-actions-tab {
+    @apply relative top-0 right-0 w-full mb-4;
+  }
+  
+  .btn-airdrop,
+  .btn-epo,
+  .btn-explorer,
+  .btn-whitepaper,
+  .btn-connect-wallet {
+    @apply py-2 px-4 text-sm;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-indigo-500 to-indigo-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply from-indigo-400 to-indigo-600;
+}
+
+/* Focus States */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-indigo-500 ring-opacity-50;
+}
+
+/* Disabled States */
+button:disabled {
+  @apply opacity-50 cursor-not-allowed transform-none;
+}
+
+/* Loading States */
+.loading {
+  @apply animate-pulse;
+}
+
+.loading-spinner {
+  @apply animate-spin rounded-full h-6 w-6 border-b-2 border-white;
+}
+  /* Use Cases Button - Cyan to Purple Gradient */
+  .btn-usecases {
+    @apply bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700;
+    @apply hover:from-cyan-600 hover:via-blue-700 hover:to-purple-800;
+    @apply text-white font-semibold py-3 px-6 rounded-full;
+    @apply transform hover:scale-105 transition-all duration-300;
+    @apply shadow-lg hover:shadow-xl;
+    @apply border-2 border-cyan-400 hover:border-cyan-300;
+  }
+
+/* Enhanced Mobile Responsive Design */
+@media (max-width: 768px) {
+  /* Mobile-specific card adjustments */
+  .card-brilliant,
+  .card-dark {
+    @apply mx-2 rounded-xl;
+  }
+
+  /* Mobile navigation improvements */
+  .mobile-nav-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile grid adjustments */
+  .mobile-grid-1 {
+    @apply grid-cols-1;
+  }
+
+  .mobile-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  /* Mobile text adjustments */
+  .mobile-text-sm {
+    @apply text-sm;
+  }
+
+  .mobile-text-xs {
+    @apply text-xs;
+  }
+
+  /* Mobile padding adjustments */
+  .mobile-p-2 {
+    @apply p-2;
+  }
+
+  .mobile-p-4 {
+    @apply p-4;
+  }
+
+  /* Mobile spacing adjustments */
+  .mobile-space-y-2 > * + * {
+    @apply mt-2;
+  }
+
+  .mobile-space-y-4 > * + * {
+    @apply mt-4;
+  }
+
+  /* Mobile-specific header adjustments */
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
+  h3 {
+    @apply text-xl;
+  }
+}
+
+/* Tablet Responsive Design */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tablet-grid-2 {
+    @apply grid-cols-2;
+  }
+
+  .tablet-grid-3 {
+    @apply grid-cols-3;
+  }
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 768px) {
+  button {
+    @apply min-h-[44px];
+  }
+  
+  input, select, textarea {
+    @apply min-h-[44px];
+  }
+
+  /* Mobile-specific quick actions */
+  .quick-actions-tab {
+    @apply relative top-0 right-0 w-full mb-4 mx-2;
+  }
+
+  /* Mobile-friendly modal */
+  .modal-content {
+    @apply mx-2 max-h-[85vh];
+  }
+
+  /* Mobile-friendly forms */
+  .form-input {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .container {
+    @apply px-2;
+  }
+
+  .card-brilliant,
+  .card-dark {
+    @apply p-3;
+  }
+
+  /* Extra small text adjustments */
+  .text-4xl {
+    @apply text-2xl;
+  }
+
+  .text-5xl {
+    @apply text-3xl;
+  }
+
+  .text-3xl {
+    @apply text-xl;
+  }
+
+  .text-2xl {
+    @apply text-lg;
+  }
+
+  .text-xl {
+    @apply text-base;
+  }
+}

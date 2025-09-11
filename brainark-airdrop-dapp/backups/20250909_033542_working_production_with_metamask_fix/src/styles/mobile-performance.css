@@ -1,0 +1,209 @@
+/* Mobile Performance Optimizations */
+
+/* Performance Mode - Reduced effects for low-end devices */
+.performance-mode {
+  /* Disable expensive CSS effects */
+  --backdrop-blur: none !important;
+  --gradient-animation: none !important;
+  --box-shadow: none !important;
+}
+
+.performance-mode * {
+  /* Force hardware acceleration only when needed */
+  will-change: auto !important;
+  transform: none !important;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.performance-mode .bg-gradient-to-r,
+.performance-mode .bg-gradient-to-br,
+.performance-mode .bg-gradient-to-bl {
+  /* Replace gradients with solid colors */
+  background: #1e293b !important;
+}
+
+.performance-mode .backdrop-blur-sm,
+.performance-mode .backdrop-blur-md,
+.performance-mode .backdrop-blur-lg {
+  /* Remove backdrop blur */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.performance-mode .shadow-2xl,
+.performance-mode .shadow-xl,
+.performance-mode .shadow-lg {
+  /* Remove heavy shadows */
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1) !important;
+}
+
+/* Reduced Motion Support */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduce-motion .animate-spin,
+.reduce-motion .animate-pulse,
+.reduce-motion .animate-bounce {
+  animation: none !important;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Optimize touch targets */
+  button, .btn, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Optimize scrolling */
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Reduce repaints */
+  .fixed {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Optimize forms */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    border-radius: 0; /* Remove rounded corners on iOS */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Optimize images */
+  img {
+    height: auto;
+    max-width: 100%;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Reduce animation complexity */
+  .animate-pulse {
+    animation: mobile-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes mobile-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .7;
+    }
+  }
+}
+
+/* Low-end device optimizations */
+@media (max-width: 480px) {
+  /* Further reduce effects */
+  .bg-opacity-10,
+  .bg-opacity-20,
+  .bg-opacity-30 {
+    background-color: rgb(0 0 0 / 0.8) !important;
+  }
+
+  /* Simplify borders */
+  .border-opacity-20,
+  .border-opacity-30 {
+    border-color: rgb(255 255 255 / 0.2) !important;
+  }
+
+  /* Optimize text rendering */
+  body, * {
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+
+  /* Reduce complex layouts */
+  .grid-cols-3,
+  .grid-cols-4,
+  .grid-cols-5,
+  .grid-cols-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Connection-based optimizations */
+@media (prefers-reduced-data) {
+  /* Hide non-essential images */
+  .decorative-image {
+    display: none;
+  }
+
+  /* Reduce image quality */
+  img {
+    image-rendering: pixelated;
+  }
+
+  /* Disable autoplay */
+  video {
+    autoplay: false;
+  }
+}
+
+/* Battery optimization */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation: none;
+  }
+
+  .animate-pulse {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition: none !important;
+  }
+}
+
+/* iOS Safari specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* Fix Safari viewport issues */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Optimize momentum scrolling */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix input zoom */
+  input[type="color"],
+  input[type="date"],
+  input[type="datetime"],
+  input[type="datetime-local"],
+  input[type="email"],
+  input[type="month"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="text"],
+  input[type="time"],
+  input[type="url"],
+  input[type="week"],
+  select:focus,
+  textarea {
+    font-size: 16px;
+  }
+}
