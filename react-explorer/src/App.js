@@ -527,7 +527,8 @@ function App() {
               className="network-select"
             >
               <option value="local">🏠 Local Development</option>
-              <option value="production">🌐 Production</option>
+              <option value="chain1236">🆕 BrainArk Chain 1236 (New)</option>
+              <option value="production">🌐 Production (Legacy 424242)</option>
             </select>
           </div>
         </div>

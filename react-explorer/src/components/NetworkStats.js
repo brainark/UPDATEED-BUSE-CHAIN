@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CURRENT_NETWORK } from '../config';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -199,9 +200,21 @@ const NetworkStats = ({ web3 }) => {
           <div className="stat-value">{stats.averageBlockTime}s</div>
         </div>
         <div className="stat-card">
-          <h3>⚡ Network Hash Rate</h3>
-          <div className="stat-value">{stats.networkHashRate.toFixed(2)} TH/s</div>
+          <h3>⚡ Consensus</h3>
+          <div className="stat-value">{CURRENT_NETWORK.CONSENSUS || 'IBFT2'}</div>
         </div>
+        {CURRENT_NETWORK.VALIDATORS && (
+          <div className="stat-card">
+            <h3>🛡️ Validators</h3>
+            <div className="stat-value">{CURRENT_NETWORK.VALIDATORS} nodes</div>
+          </div>
+        )}
+        {CURRENT_NETWORK.INITIAL_SUPPLY && (
+          <div className="stat-card">
+            <h3>💰 Total Supply</h3>
+            <div className="stat-value">{CURRENT_NETWORK.INITIAL_SUPPLY}</div>
+          </div>
+        )}
       </div>
 
       <div className="charts-container">
