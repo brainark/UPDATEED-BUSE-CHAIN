@@ -43,7 +43,7 @@
     "@babel/plugin-syntax-import-meta": "^7.10.4",
     "@babel/preset-env": "^7.25.0",
     "@next/swc-linux-x64-gnu": "^14.2.31",
-    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-ethers": "^4.0.1",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@typechain/ethers-v6": "^0.5.0",
